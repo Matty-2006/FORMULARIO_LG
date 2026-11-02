@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Reportes CIRELEC</title>
+<link rel="icon" href="logo.png">
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --t: #2f3a86; --rojo: #8e2b35; --dato: #111; --barra: #1f2a63; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #d9dce3; font-family: Arial, Helvetica, sans-serif; color: var(--t); }
+
+  /* ---------- barra ---------- */
+  .toolbar { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 8px 12px; background: var(--barra); color: #fff; font-size: 14px; }
+  .toolbar .marca { font-weight: bold; margin-right: 8px; letter-spacing: .5px; }
+  .btn { font: inherit; font-size: 13.5px; padding: 7px 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 5px; cursor: pointer;
+    background: transparent; color: #fff; white-space: nowrap; }
+  .btn:hover { background: rgba(255,255,255,.12); }
+  .btn.pri { background: #fff; color: var(--barra); border-color: #fff; font-weight: bold; }
+  .btn.pri:hover { background: #e8ecff; }
+  .btn.on { background: #ffd54a; color: #222; border-color: #ffd54a; }
+  .estado { margin-left: auto; font-size: 12.5px; opacity: .9; }
+  .estado.sucio { color: #ffd54a; opacity: 1; }
+  .editbar { display: none;background: #fff6cc; color: #5a4500; padding: 7px 12px; font-size: 13px;
+    gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #e6d27a; }
+  body.editando .editbar { display: flex; }
+  .editbar button { font: inherit; padding: 4px 10px; border: 1px solid #b89a2a; background: #fff; border-radius: 4px; cursor: pointer; color: #5a4500; }
+
+  /* ---------- hoja ---------- */
+  .page { position: relative; width: 210mm; height: 297mm; margin: 16px auto; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.25); overflow: hidden; }
+  .abs { position: absolute; }
+  .box { left: 12.1mm; width: 181.3mm; }
+  .L { border-color: var(--t) !important; }
+
+  input { border: 0; outline: 0; background: transparent; font-family: Arial, Helvetica, sans-serif; font-size: 8.6pt;
+    text-transform: uppercase; padding: 0 1mm; width: 100%; height: 100%; color: var(--dato); min-width: 0; }
+  input.c { text-align: center; }
+  input:hover { background: #eef2ff; }
+  input:focus { background: #e1e8ff; }
+
+  .e { outline: none; }
+  body.editando .e { outline: 1px dashed #d4a300; outline-offset: 1px; cursor: text; background: #fffbe6; }
+  body.editando .e:focus { background: #fff1a8; }
+
+  .lbl { font-size: 10pt; white-space: nowrap; }
+  .logo { left: 13.4mm; top: 12.3mm; width: 53.7mm; }
+  .gen { left: 80.9mm; top: 17.4mm; width: 45mm; text-align: center; font-family: "Franklin Gothic Demi", "Franklin Gothic Medium", "Arial Black", Arial, sans-serif;
+    font-weight: 900; font-size: 19pt; letter-spacing: .2px; }
+  .rep { left: 136mm; top: 13.5mm; width: 58mm; text-align: center; font-size: 13.5pt; }
+  .num { left: 151mm; top: 21.6mm; width: 36mm; }
+  .num input { font-size: 19pt; text-align: center; padding: 0; letter-spacing: .5px; height: 9mm; color: var(--rojo); }
+
+  .main { top: 33.2mm; height: 40.1mm; display: flex; border: 0.35mm solid var(--t); border-bottom: 0; }
+  .col { height: 100%; }
+  .cl { width: 48.7mm; border-right: 0.35mm solid var(--t); }
+  .cm { width: 66mm; border-right: 0.35mm solid var(--t); }
+  .cr { flex: 1; }
+  .row { display: flex; align-items: center; border-bottom: 0.35mm solid var(--t); }
+  .row > .lbl { padding-left: 2.6mm; }
+  .grid6 { display: grid; grid-template-columns: repeat(6, 1fr); height: 100%; width: 100%; }
+  .grid6 > div { border-right: 0.35mm solid var(--t); display: flex; align-items: center; justify-content: center; font-size: 7.6pt; }
+  .grid6 > div:nth-child(6n) { border-right: 0; }
+  .grid6 input { padding: 0; font-size: 8pt; text-align: center; }
+  .half { width: 50%; text-align: center; font-size: 9.4pt; height: 100%; line-height: 3.6mm; }
+
+  .cm .row { border-bottom: 0; padding: 0 2.8mm 0 2.6mm; align-items: flex-end; }
+  .cm .row .lbl { padding-left: 0; width: 15mm; font-size: 9.6pt; }
+  .cm .line { flex: 1; height: 72%; border-bottom: 0.3mm solid var(--t); }
+  .cm .row:last-child .line { border-bottom: 0; }
+
+  .two { display: flex; height: 100%; width: 100%; }
+  .two > div:first-child { width: 33mm; border-right: 0.35mm solid var(--t); }
+  .two > div:last-child { flex: 1; }
+  .cellin { display: flex; align-items: center; height: 5.4mm; padding-left: 2.2mm; }
+  .cellin .lbl { font-size: 9.6pt; }
+
+  .lines { top: 73.3mm; border-left: 0.35mm solid var(--t); border-right: 0.35mm solid var(--t); }
+  .ln { height: 5.45mm; border-top: 0.35mm solid var(--t); display: flex; align-items: flex-end; padding: 0 0 .2mm 2.6mm; }
+  .ln .lbl { font-size: 10.5pt; margin-right: 1mm; padding-bottom: .3mm; }
+  .ln input { height: 4.4mm; }
+  .ln .ul { flex: 1; border-bottom: 0.3mm solid var(--t); height: 4.4mm; margin-right: 1.5mm; }
+
+  .meas { top: 144.2mm; border: 0.35mm solid var(--t); border-bottom: 0; }
+  .meas table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  .meas td { border: 0.35mm solid var(--t); border-top: 0; height: 5.3mm; padding: 0 .8mm; font-size: 10pt; white-space: nowrap; }
+  .meas td:first-child { border-left: 0; }
+  .meas td:last-child { border-right: 0; }
+  .meas .f { display: flex; align-items: center; height: 100%; }
+  .meas .f input { flex: 1; }
+  sub { font-size: 7pt; }
+
+  .obs { top: 154.8mm; height: 11.2mm; border: 0.35mm solid var(--t); border-top: 0; }
+  .obs .ln { border-top: 0; height: 5.6mm; }
+
+  .mat { top: 171mm; border-collapse: collapse; table-layout: fixed; border: 0.5mm solid var(--t); }
+  .mat td, .mat th { border: 0.35mm solid var(--t); height: 5.42mm; padding: 0; font-size: 9pt; }
+  .mat th { font-weight: normal; height: 5.8mm; font-size: 10pt; }
+  .mat td.n { text-align: center; }
+
+  .recibo { top: 230.3mm; left: 30mm; width: 90mm; text-align: center; font-size: 10.5pt; }
+  .sig { border-top: 0.35mm solid var(--t); text-align: center; font-size: 10.2pt; padding-top: 2mm; }
+  .horas { left: 131.9mm; top: 230.3mm; width: 61.5mm; height: 37.7mm; border: 0.5mm solid var(--t); }
+  .horas .h { display: flex; border-bottom: 0.35mm solid var(--t); }
+  .horas .h > div { flex: 1; }
+  .horas .h > div:first-child { border-right: 0.35mm solid var(--t); }
+  .horas .h1 { height: 8.4mm; } .horas .h1 > div { display: flex; align-items: center; justify-content: center; font-size: 9pt; }
+  .horas .h2 { height: 9.9mm; } .horas .h2 input { padding-left: 4.5mm; font-size: 9pt; }
+  .nota { padding: 2.6mm 2mm 0 2mm; font-size: 8.1pt; line-height: 1.28; text-align: justify; }
+
+  .footline { left: 12.1mm; top: 281.6mm; width: 184.6mm; border-top: 0.35mm solid var(--t); }
+  .foot { left: 12.1mm; top: 283.6mm; width: 184.6mm; text-align: center; font-size: 8.6pt;
+    font-family: "Arial Narrow", Arial, sans-serif; }
+
+  /* ---------- ventanas ---------- */
+  .velo { position: fixed; inset: 0; background: rgba(15,20,45,.55); z-index: 50; display: none; align-items: flex-start; justify-content: center; padding: 6vh 12px; }
+  .velo.ver { display: flex; }
+  .modal { background: #fff; color: #222; width: min(760px, 100%); max-height: 86vh; display: flex; flex-direction: column; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+  .modal header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e3e5ee; }
+  .modal header h2 { margin: 0; font-size: 17px; color: var(--barra); flex: 1; }
+  .tabs button { font: inherit; font-size: 13px; padding: 5px 10px; border: 1px solid #c9cde0; background: #fff; border-radius: 4px; cursor: pointer; }
+  .tabs button.act { background: var(--barra); color: #fff; border-color: var(--barra); }
+  .modal .buscar { margin: 12px 16px 6px; padding: 8px 10px; border: 1px solid #c9cde0; border-radius: 5px; font-size: 14px; text-transform: none; height: auto; width: auto; color: #222; background: #fff; }
+  .lista { overflow: auto; padding: 4px 16px 16px; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid #eef0f5; }
+  .item:hover { background: #f5f7ff; }
+  .item .info { flex: 1; min-width: 0; cursor: pointer; }
+  .item .t { font-weight: bold; color: var(--barra); font-size: 14px; }
+  .item .s { font-size: 12.5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item button { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid #d9b3b3; color: #9b2c2c; background: #fff; border-radius: 4px; cursor: pointer; }
+  .vacio { padding: 24px; text-align: center; color: #777; font-size: 14px; }
+  .x { font: inherit; font-size: 20px; border: 0; background: none; cursor: pointer; color: #555; line-height: 1; }
+
+  .login { background: #fff; color: #222; width: min(420px, 100%); border-radius: 8px; padding: 24px; text-align: center; }
+  .login img { width: 200px; }
+  .login p { color: #555; font-size: 14px; }
+  .login input { border: 1px solid #c9cde0; border-radius: 5px; padding: 9px; height: auto; text-transform: none; font-size: 14px; margin: 8px 0; color: #222; background: #fff; }
+  .login button { font: inherit; padding: 9px 16px; background: var(--barra); color: #fff; border: 0; border-radius: 5px; cursor: pointer; width: 100%; }
+
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1f2a63; color: #fff; padding: 10px 18px;
+    border-radius: 6px; font-size: 14px; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; }
+  .toast.ver { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { background: #9b2c2c; }
+
+  @media print {
+    html, body { background: #fff; }
+    .toolbar, .editbar, .velo, .toast { display: none !important; }
+    .page { margin: 0; box-shadow: none; zoom: 1 !important; }
+    input:hover, input:focus { background: transparent; }
+    body.editando .e { outline: 0; background: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="marca">CIRELEC · Reportes</span>
+  <button class="btn" id="bNuevo">＋ Nuevo</button>
+  <button class="btn pri" id="bGuardar">💾 Guardar</button>
+  <button class="btn" id="bImprimir">🖨 Imprimir / PDF</button>
+  <button class="btn" id="bHistorial">📂 Reportes y clientes</button>
+  <button class="btn" id="bEditar">✏️ Editar títulos</button>
+  <span class="estado" id="estado"></span>
+</div>
+<div class="editbar">
+  <b>Modo edición de títulos:</b> haz clic en cualquier texto del formato para cambiarlo. Se guarda con este reporte al presionar Guardar.
+  <button id="bPredet">Usar este formato para reportes nuevos</button>
+  <button id="bOriginal">Restaurar formato original</button>
+</div>
+
+<datalist id="dlClientes"></datalist>
+
+<div class="page" id="page">
+  <img class="abs logo" src="logo.png" alt="CIRELEC Element Circuit">
+  <div class="abs gen e">GENERADORES</div>
+  <div class="abs rep e">REPORTE DE TRABAJO</div>
+  <div class="abs num"><input data-f="numero" aria-label="Número de reporte"></div>
+
+  <!-- BLOQUE PRINCIPAL -->
+  <div class="abs box main">
+    <div class="col cl">
+      <div class="row" style="height:3.54mm;justify-content:center;font-size:10pt"><span class="e">FECHAS REALES</span></div>
+      <div class="row" style="height:3.73mm">
+        <div class="half e" style="border-right:0.35mm solid var(--t)">INICIO</div>
+        <div class="half e">FINAL</div>
+      </div>
+      <div class="row" style="height:3.73mm">
+        <div class="grid6"><div class="e">MES</div><div class="e">DIA</div><div class="e">AÑO</div><div class="e">MES</div><div class="e">DIA</div><div class="e">AÑO</div></div>
+      </div>
+      <div class="row" style="height:6.15mm">
+        <div class="grid6">
+          <div><input data-f="ini_mes"></div><div><input data-f="ini_dia"></div><div><input data-f="ini_anio"></div>
+          <div><input data-f="fin_mes"></div><div><input data-f="fin_dia"></div><div><input data-f="fin_anio"></div>
+        </div>
+      </div>
+      <div class="row" style="height:5.97mm"><span class="lbl e">EQUIPO:</span><input data-f="equipo"></div>
+      <div class="row" style="height:5.6mm"><span class="lbl e">MARCA:</span><input data-f="marca"></div>
+      <div class="row" style="height:5.6mm"><span class="lbl e">MODELO:</span><input data-f="modelo"></div>
+      <div class="row" style="height:5.78mm;border-bottom:0"><span class="lbl e">SERIE Nº:</span><input data-f="serie"></div>
+    </div>
+
+    <div class="col cm">
+      <div class="row" style="height:6.34mm"><span class="lbl e">CLIENTE:</span><div class="line"><input data-f="cliente" list="dlClientes" autocomplete="off"></div></div>
+      <div class="row" style="height:5.22mm"><span class="lbl e">Dirección:</span><div class="line"><input data-f="direccion"></div></div>
+      <div class="row" style="height:5.6mm"><span class="lbl e">Teléfono:</span><div class="line"><input data-f="telefono"></div></div>
+      <div class="row" style="height:5.97mm"><span class="lbl e">Motor:</span><div class="line"><input data-f="motor"></div></div>
+      <div class="row" style="height:5.6mm"><span class="lbl e">Modelo:</span><div class="line"><input data-f="motor_modelo"></div></div>
+      <div class="row" style="height:5.6mm"><span class="lbl e">Alternador:</span><div class="line"><input data-f="alternador"></div></div>
+      <div class="row" style="height:5.78mm"><span class="lbl e">Modelo:</span><div class="line"><input data-f="alt_modelo"></div></div>
+    </div>
+
+    <div class="col cr">
+      <div class="row" style="height:5.6mm;justify-content:center;font-size:12.5pt"><span class="e">TECNICO (S)</span></div>
+      <div class="row" style="height:5.97mm"><input data-f="tecnico1" style="padding-left:2.6mm"></div>
+      <div class="row" style="height:5.6mm"><input data-f="tecnico2" style="padding-left:2.6mm"></div>
+      <div class="row" style="height:11.19mm;align-items:flex-start">
+        <div class="two">
+          <div><div class="cellin"><span class="lbl e">Serie:</span><input data-f="motor_serie"></div></div>
+          <div><div class="cellin"><span class="lbl e">Hrs.:</span><input data-f="horas"></div></div>
+        </div>
+      </div>
+      <div class="row" style="height:11.75mm;align-items:flex-start;border-bottom:0">
+        <div class="two">
+          <div><div class="cellin" style="margin-top:2.4mm"><span class="lbl e">Serie:</span><input data-f="alt_serie"></div></div>
+          <div>
+            <div class="cellin" style="margin-top:.6mm"><span class="lbl e">KW/KWA</span></div>
+            <div class="cellin" style="padding-left:1.2mm"><input data-f="kw_kva"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPCIÓN / DAÑOS / TRABAJOS -->
+  <div class="abs box lines">
+    <div class="ln"><span class="lbl e">Descripción del Trabajo:</span><div class="ul"><input data-f="desc1"></div></div>
+    <div class="ln"><input data-f="desc2"></div>
+    <div class="ln"><span class="lbl e">Daños encontrados:</span><div class="ul"><input data-f="danos1"></div></div>
+    <div class="ln"><input data-f="danos2"></div>
+    <div class="ln"><span class="lbl e">Trabajos Efectuados:</span><input data-f="trab1"></div>
+    <div class="ln"><input data-f="trab2"></div>
+    <div class="ln"><input data-f="trab3"></div>
+    <div class="ln"><input data-f="trab4"></div>
+    <div class="ln"><input data-f="trab5"></div>
+    <div class="ln"><input data-f="trab6"></div>
+    <div class="ln"><input data-f="trab7"></div>
+    <div class="ln"><input data-f="trab8"></div>
+    <div class="ln"><input data-f="trab9"></div>
+  </div>
+
+  <!-- MEDICIONES -->
+  <div class="abs box meas">
+    <table>
+      <colgroup><col style="width:29.8mm"><col style="width:30.4mm"><col style="width:29.8mm"><col style="width:27.8mm"><col style="width:29.1mm"><col></colgroup>
+      <tr>
+        <td><div class="f"><span class="e">KW</span><input data-f="kw"></div></td>
+        <td><div class="f"><span class="e">KVA</span><input data-f="kva"></div></td>
+        <td colspan="2"><div class="f"><span class="e">P. ACEITE=</span><input data-f="p_aceite"></div></td>
+        <td><div class="f"><span class="e">V.BAT=</span><input data-f="v_bat"></div></td>
+        <td><div class="f"><span class="e">TH<sub>2</sub>O=</span><input data-f="th2o"></div></td>
+      </tr>
+      <tr>
+        <td><div class="f"><span class="e">L1=</span><input data-f="l1"><span class="e">A</span></div></td>
+        <td><div class="f"><span class="e">L2=</span><input data-f="l2"><span class="e">A</span></div></td>
+        <td><div class="f"><span class="e">L3=</span><input data-f="l3"><span class="e">A</span></div></td>
+        <td><div class="f"><span class="e">V-V=</span><input data-f="vv"><span class="e">V</span></div></td>
+        <td><div class="f"><span class="e">V-N=</span><input data-f="vn"><span class="e">V</span></div></td>
+        <td><div class="f"><span class="e">H<sub>2</sub>=</span><input data-f="h2"></div></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="abs box obs">
+    <div class="ln" style="padding-left:3.6mm"><span class="lbl e">Observaciones:</span><div class="ul" style="margin-right:0"><input data-f="obs1"></div></div>
+    <div class="ln"><div class="ul" style="margin-right:0"><input data-f="obs2"></div></div>
+  </div>
+
+  <!-- MATERIALES -->
+  <table class="abs box mat">
+    <colgroup><col style="width:7.5mm"><col style="width:71.2mm"><col style="width:11.7mm"><col style="width:7.5mm"><col style="width:70.9mm"><col></colgroup>
+    <thead><tr><th class="e">Nº</th><th class="e">MATERIAL Y/O REPUESTOS UTILIZADOS</th><th class="e">Cant.</th><th class="e">Nº</th><th class="e">MATERIAL Y/O REPUESTOS UTILIZADOS</th><th class="e">Cant.</th></tr></thead>
+    <tbody id="matBody"></tbody>
+  </table>
+
+  <!-- PIE -->
+  <div class="abs recibo e">RECIBO EL EQUIPO A ENTERA SATISFACCIÓN</div>
+  <div class="abs sig e" style="left:23.3mm;top:250.5mm;width:34.5mm">Técnico</div>
+  <div class="abs sig e" style="left:23.3mm;top:269mm;width:34.5mm">Gerente Técnico</div>
+  <div class="abs" style="left:88.6mm;top:264.3mm;width:34.5mm;height:4.6mm"><input data-f="recibido" class="c" style="font-size:9.4pt"></div>
+  <div class="abs sig e" style="left:88.6mm;top:269mm;width:34.5mm">Cliente</div>
+  <div class="abs" style="left:77.8mm;top:273.8mm;width:45.3mm;display:flex;align-items:flex-end;height:4.6mm">
+    <span class="e" style="font-size:10pt;margin-right:1mm">Nombre:</span>
+    <div style="flex:1;border-bottom:0.35mm solid var(--t);height:4.2mm"><input data-f="nombre_recibe" style="font-size:8.6pt"></div>
+  </div>
+
+  <div class="abs horas">
+    <div class="h h1"><div class="e">Hora de Entrada</div><div class="e">Hora de Salida</div></div>
+    <div class="h h2"><div><input data-f="hora_entrada"></div><div><input data-f="hora_salida"></div></div>
+    <div class="nota e"><b>NOTA PARA EL CLIENTE:</b> Si el trabajo no es efectuado, el cliente se compromete a cancelar a la compañía el valor del diagnóstico y elaboración del presupuesto.</div>
+  </div>
+
+  <div class="abs footline"></div>
+  <div class="abs foot e">Cel.: 0994 856 811, E-mail: cirelec@hotmail.com - Quito</div>
+</div>
+
+<!-- Historial -->
+<div class="velo" id="vHist">
+  <div class="modal">
+    <header>
+      <h2>Guardados</h2>
+      <div class="tabs"><button id="tRep" class="act">Reportes</button> <button id="tCli">Clientes</button></div>
+      <button class="x" data-cerrar>×</button>
+    </header>
+    <input class="buscar" id="buscar" placeholder="Buscar por número, cliente o descripción…">
+    <div class="lista" id="lista"></div>
+  </div>
+</div>
+
+<!-- Acceso -->
+<div class="velo" id="vLogin">
+  <div class="login">
+    <img src="logo.png" alt="CIRELEC">
+    <h3 style="color:var(--barra)">Acceso restringido</h3>
+    <p>Abre la aplicación con el enlace privado que te enviaron, o pega aquí tu clave de acceso.</p>
+    <input id="claveIn" type="password" placeholder="Clave de acceso">
+    <button id="bEntrar">Entrar</button>
+    <p id="loginErr" style="color:#9b2c2c;min-height:18px"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- utilidades ----------
+const $ = (s) => document.querySelector(s);
+const MESES = ['ENE.', 'FEB.', 'MAR.', 'ABR.', 'MAY.', 'JUN.', 'JUL.', 'AGO.', 'SEP.', 'OCT.', 'NOV.', 'DIC.'];
+const CAMPOS_CLIENTE = ['cliente', 'direccion', 'telefono', 'equipo', 'marca', 'modelo', 'serie', 'motor', 'motor_modelo',
+  'motor_serie', 'horas', 'alternador', 'alt_modelo', 'alt_serie', 'kw_kva'];
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast ver' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2600);
+}
+
+// filas de materiales
+const body = $('#matBody');
+for (let i = 1; i <= 9; i++) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="n">${i}</td><td><input data-f="m${i}"></td><td><input class="c" data-f="m${i}_c"></td>` +
+                 `<td class="n">${i + 9}</td><td><input data-f="m${i + 9}"></td><td><input class="c" data-f="m${i + 9}_c"></td>`;
+  body.appendChild(tr);
+}
+
+const inputs = [...document.querySelectorAll('#page input[data-f]')];
+const campo = (f) => document.querySelector(`#page input[data-f="${f}"]`);
+const etiquetasEl = [...document.querySelectorAll('#page .e')];
+const ORIGINAL = etiquetasEl.map(e => e.innerHTML);
+
+// ---------- acceso ----------
+const KEY_LS = 'cirelec-clave';
+let clave = '';
+try { clave = localStorage.getItem(KEY_LS) || ''; } catch (e) {}
+const qk = new URLSearchParams(location.search).get('k');
+if (qk) {
+  clave = qk;
+  try { localStorage.setItem(KEY_LS, qk); } catch (e) {}
+  history.replaceState(null, '', location.pathname);
+}
+
+async function api(ruta, opciones = {}) {
+  const r = await fetch('/api/' + ruta, {
+    ...opciones,
+    headers: { 'content-type': 'application/json', 'x-key': clave, ...(opciones.headers || {}) },
+  });
+  if (r.status === 401) { mostrarLogin('Clave incorrecta o vencida.'); throw new Error('No autorizado'); }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Error ' + r.status);
+  return data;
+}
+
+function mostrarLogin(msg) { $('#loginErr').textContent = msg || ''; $('#vLogin').classList.add('ver'); }
+$('#bEntrar').onclick = async () => {
+  clave = $('#claveIn').value.trim();
+  try { localStorage.setItem(KEY_LS, clave); } catch (e) {}
+  try { await api('ping'); $('#vLogin').classList.remove('ver'); iniciar(); } catch (e) {}
+};
+$('#claveIn').onkeydown = (e) => { if (e.key === 'Enter') $('#bEntrar').click(); };
+
+// ---------- estado ----------
+let cargado = null;       // número del reporte abierto (si ya está guardado)
+let sucio = false;
+let formatoPredet = null; // etiquetas por defecto para reportes nuevos
+let clientes = [];
+
+function marcar(s) {
+  sucio = s;
+  const e = $('#estado');
+  e.textContent = s ? '● Cambios sin guardar' : (cargado ? `Reporte ${cargado} guardado` : '');
+  e.className = 'estado' + (s ? ' sucio' : '');
+  if (s) guardarBorrador();
+}
+
+function leerCampos() { const d = {}; inputs.forEach(i => d[i.dataset.f] = i.value.trim()); return d; }
+function ponerCampos(d) { inputs.forEach(i => i.value = (d && d[i.dataset.f]) || ''); }
+function leerEtiquetas() { return etiquetasEl.map(e => e.innerHTML); }
+function ponerEtiquetas(arr) {
+  const a = Array.isArray(arr) && arr.length === etiquetasEl.length ? arr : ORIGINAL;
+  etiquetasEl.forEach((e, i) => e.innerHTML = a[i]);
+}
+
+function guardarBorrador() {
+  try { localStorage.setItem('cirelec-borrador', JSON.stringify({ cargado, campos: leerCampos(), etiquetas: leerEtiquetas() })); } catch (e) {}
+}
+function borrarBorrador() { try { localStorage.removeItem('cirelec-borrador'); } catch (e) {} }
+
+// ---------- acciones ----------
+async function nuevo(confirmar = true) {
+  if (confirmar && sucio && !confirm('Hay cambios sin guardar. ¿Empezar un reporte nuevo de todas formas?')) return;
+  ponerCampos({});
+  ponerEtiquetas(formatoPredet);
+  const hoy = new Date();
+  campo('fin_mes').value = MESES[hoy.getMonth()];
+  campo('fin_dia').value = String(hoy.getDate());
+  campo('fin_anio').value = String(hoy.getFullYear());
+  cargado = null;
+  try { campo('numero').value = (await api('siguiente')).numero; } catch (e) {}
+  marcar(false);
+  borrarBorrador();
+  window.scrollTo(0, 0);
+}
+
+async function guardar() {
+  const d = leerCampos();
+  const num = d.numero;
+  if (!num) { toast('Pon el número del reporte', true); campo('numero').focus(); return; }
+  if (!/^[0-9A-Za-z-]{1,20}$/.test(num)) { toast('El número solo puede tener letras, números y guiones', true); return; }
+  if (num !== cargado) {
+    try {
+      await api('reportes/' + encodeURIComponent(num));
+      if (!confirm(`Ya existe un reporte con el número ${num}. ¿Reemplazarlo?`)) return;
+    } catch (e) { if (e.message === 'No autorizado') return; }
+  }
+  const b = $('#bGuardar'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    await api('reportes/' + encodeURIComponent(num), { method: 'PUT', body: JSON.stringify({ campos: d, etiquetas: leerEtiquetas() }) });
+    cargado = num;
+    marcar(false);
+    borrarBorrador();
+    toast(`Reporte ${num} guardado`);
+    cargarClientes();
+  } catch (e) {
+    toast('No se pudo guardar: ' + e.message, true);
+  } finally { b.disabled = false; b.textContent = '💾 Guardar'; }
+}
+
+async function abrir(num) {
+  if (sucio && !confirm('Hay cambios sin guardar. ¿Abrir otro reporte de todas formas?')) return;
+  try {
+    const r = await api('reportes/' + encodeURIComponent(num));
+    ponerCampos(r.campos);
+    ponerEtiquetas(r.etiquetas);
+    cargado = r.numero;
+    marcar(false);
+    borrarBorrador();
+    cerrarModales();
+    window.scrollTo(0, 0);
+  } catch (e) { toast('No se pudo abrir: ' + e.message, true); }
+}
+
+async function cargarClientes() {
+  try {
+    clientes = await api('clientes');
+    const dl = $('#dlClientes'); dl.innerHTML = '';
+    clientes.forEach(c => { const o = document.createElement('option'); o.value = c.cliente; dl.appendChild(o); });
+  } catch (e) {}
+}
+
+function autocompletarCliente() {
+  const v = campo('cliente').value.trim().toUpperCase();
+  const c = clientes.find(x => (x.cliente || '').trim().toUpperCase() === v);
+  if (!c) return;
+  CAMPOS_CLIENTE.forEach(f => { if (campo(f)) campo(f).value = c[f] || ''; });
+  marcar(true);
+  toast('Datos del cliente cargados');
+}
+
+// ---------- historial ----------
+let pestaña = 'rep', datosLista = [];
+async function abrirHistorial() {
+  $('#vHist').classList.add('ver');
+  $('#buscar').value = '';
+  await cargarLista();
+  $('#buscar').focus();
+}
+async function cargarLista() {
+  $('#lista').innerHTML = '<div class="vacio">Cargando…</div>';
+  try {
+    if (pestaña === 'rep') datosLista = await api('reportes');
+    else { await cargarClientes(); datosLista = clientes; }
+    pintarLista();
+  } catch (e) { $('#lista').innerHTML = '<div class="vacio">No se pudo cargar.</div>'; }
+}
+function pintarLista() {
+  const q = $('#buscar').value.trim().toUpperCase();
+  const cont = $('#lista'); cont.innerHTML = '';
+  const filtrados = datosLista.filter(x => JSON.stringify(x).toUpperCase().includes(q));
+  if (!filtrados.length) { cont.innerHTML = `<div class="vacio">${pestaña === 'rep' ? 'Aún no hay reportes guardados.' : 'Aún no hay clientes guardados.'}</div>`; return; }
+  filtrados.forEach(x => {
+    const it = document.createElement('div'); it.className = 'item';
+    const info = document.createElement('div'); info.className = 'info';
+    const t = document.createElement('div'); t.className = 't';
+    const s = document.createElement('div'); s.className = 's';
+    const del = document.createElement('button'); del.textContent = 'Eliminar';
+    if (pestaña === 'rep') {
+      t.textContent = `Nº ${x.numero} — ${x.cliente || 'Sin cliente'}`;
+      s.textContent = [x.fecha, x.descripcion].filter(Boolean).join(' · ') || ' ';
+      info.onclick = () => abrir(x.numero);
+      del.onclick = async () => {
+        if (!confirm(`¿Eliminar el reporte ${x.numero}? Esto no se puede deshacer.`)) return;
+        await api('reportes/' + encodeURIComponent(x.numero), { method: 'DELETE' });
+        if (cargado === x.numero) { cargado = null; marcar(true); }
+        toast('Reporte eliminado'); cargarLista();
+      };
+    } else {
+      t.textContent = x.cliente;
+      s.textContent = [x.direccion, x.telefono, x.equipo, x.modelo].filter(Boolean).join(' · ') || ' ';
+      info.onclick = () => { campo('cliente').value = x.cliente; autocompletarCliente(); cerrarModales(); };
+      del.onclick = async () => {
+        if (!confirm(`¿Eliminar al cliente ${x.cliente} de la lista? Sus reportes no se borran.`)) return;
+        await api('clientes/' + encodeURIComponent(x.cliente), { method: 'DELETE' });
+        toast('Cliente eliminado'); cargarLista();
+      };
+    }
+    info.append(t, s); it.append(info, del); cont.appendChild(it);
+  });
+}
+function cerrarModales() { $('#vHist').classList.remove('ver'); }
+
+// ---------- edición de títulos ----------
+function modoEdicion(on) {
+  document.body.classList.toggle('editando', on);
+  etiquetasEl.forEach(e => e.contentEditable = on ? 'true' : 'false');
+  $('#bEditar').classList.toggle('on', on);
+  $('#bEditar').textContent = on ? '✔ Terminar edición' : '✏️ Editar títulos';
+}
+
+// ---------- eventos ----------
+inputs.forEach((el, i) => {
+  el.addEventListener('input', () => marcar(true));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); (inputs[i + 1] || el).focus(); } });
+});
+etiquetasEl.forEach(e => {
+  e.addEventListener('input', () => marcar(true));
+  e.addEventListener('paste', ev => { ev.preventDefault(); document.execCommand('insertText', false, ev.clipboardData.getData('text/plain')); });
+});
+campo('cliente').addEventListener('change', autocompletarCliente);
+campo('cliente').addEventListener('input', e => { if (e.inputType === 'insertReplacementText' || !e.inputType) autocompletarCliente(); });
+
+$('#bNuevo').onclick = () => nuevo();
+$('#bGuardar').onclick = guardar;
+$('#bImprimir').onclick = () => { modoEdicion(false); window.print(); };
+$('#bHistorial').onclick = abrirHistorial;
+$('#bEditar').onclick = () => modoEdicion(!document.body.classList.contains('editando'));
+$('#bPredet').onclick = async () => {
+  try { formatoPredet = leerEtiquetas(); await api('formato', { method: 'PUT', body: JSON.stringify({ etiquetas: formatoPredet }) }); toast('Formato guardado para reportes nuevos'); }
+  catch (e) { toast('No se pudo guardar el formato', true); }
+};
+$('#bOriginal').onclick = () => { ponerEtiquetas(ORIGINAL); marcar(true); toast('Formato original restaurado (presiona Guardar)'); };
+$('#tRep').onclick = () => { pestaña = 'rep'; $('#tRep').classList.add('act'); $('#tCli').classList.remove('act'); cargarLista(); };
+$('#tCli').onclick = () => { pestaña = 'cli'; $('#tCli').classList.add('act'); $('#tRep').classList.remove('act'); cargarLista(); };
+$('#buscar').oninput = pintarLista;
+document.querySelectorAll('[data-cerrar]').forEach(b => b.onclick = cerrarModales);
+$('#vHist').onclick = (e) => { if (e.target.id === 'vHist') cerrarModales(); };
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); }
+  if (e.key === 'Escape') cerrarModales();
+});
+window.addEventListener('beforeunload', e => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
+
+// ajustar la hoja a pantallas angostas
+function escalar() {
+  const p = $('#page'), w = window.innerWidth - 16, full = p.offsetWidth;
+  p.style.zoom = w < full ? (w / full) : '';
+}
+window.addEventListener('resize', escalar); escalar();
+window.addEventListener('beforeprint', () => { $('#page').style.zoom = ''; });
+window.addEventListener('afterprint', escalar);
+
+// ---------- inicio ----------
+async function iniciar() {
+  try { await api('ping'); } catch (e) { return; }
+  try { formatoPredet = (await api('formato')).etiquetas; } catch (e) {}
+  cargarClientes();
+  let b = null;
+  try { b = JSON.parse(localStorage.getItem('cirelec-borrador') || 'null'); } catch (e) {}
+  if (b && b.campos) {
+    ponerCampos(b.campos); ponerEtiquetas(b.etiquetas); cargado = b.cargado; marcar(true);
+    toast('Se recuperó un borrador sin guardar');
+  } else {
+    await nuevo(false);
+  }
+}
+if (!clave) mostrarLogin(); else iniciar();
+</script>
+</body>
+</html>
