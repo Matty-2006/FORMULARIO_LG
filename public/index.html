@@ -2,44 +2,53 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1f2a63">
 <title>Reportes CIRELEC</title>
 <link rel="icon" href="logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   @page { size: A4; margin: 0; }
-  :root { --t: #2f3a86; --rojo: #8e2b35; --dato: #111; --barra: #1f2a63; }
+  :root { --t: #2f3a86; --rojo: #8e2b35; --dato: #10152b; --barra: #1f2a63; --foco: #3d56c9; --ok: #1f8a4c; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #d9dce3; font-family: Arial, Helvetica, sans-serif; color: var(--t); }
+  button { -webkit-tap-highlight-color: transparent; }
 
-  /* ---------- barra ---------- */
-  .toolbar { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
-    padding: 8px 12px; background: var(--barra); color: #fff; font-size: 14px; }
+  /* ---------- barra superior ---------- */
+  .top { position: sticky; top: 0; z-index: 20; }
+  .toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: var(--barra); color: #fff; font-size: 14px; flex-wrap: wrap; }
   .toolbar .marca { font-weight: bold; margin-right: 8px; letter-spacing: .5px; }
-  .btn { font: inherit; font-size: 13.5px; padding: 7px 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 5px; cursor: pointer;
-    background: transparent; color: #fff; white-space: nowrap; }
+  .btn { font: inherit; font-size: 13.5px; padding: 7px 12px; border: 1px solid rgba(255,255,255,.5); border-radius: 6px; cursor: pointer;
+    background: transparent; color: #fff; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
   .btn:hover { background: rgba(255,255,255,.12); }
   .btn.pri { background: #fff; color: var(--barra); border-color: #fff; font-weight: bold; }
   .btn.pri:hover { background: #e8ecff; }
   .btn.on { background: #ffd54a; color: #222; border-color: #ffd54a; }
-  .estado { margin-left: auto; font-size: 12.5px; opacity: .9; }
+  .btn.firmado { background: #2fb36a; border-color: #2fb36a; color: #fff; font-weight: bold; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .estado { margin-left: auto; font-size: 12.5px; opacity: .9; display: inline-flex; align-items: center; gap: 6px; }
   .estado.sucio { color: #ffd54a; opacity: 1; }
-  .editbar { display: none;background: #fff6cc; color: #5a4500; padding: 7px 12px; font-size: 13px;
-    gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #e6d27a; }
+  .editbar { display: none; background: #fff6cc; color: #5a4500; padding: 7px 12px; font-size: 13px; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #e6d27a; }
   body.editando .editbar { display: flex; }
   .editbar button { font: inherit; padding: 4px 10px; border: 1px solid #b89a2a; background: #fff; border-radius: 4px; cursor: pointer; color: #5a4500; }
+  .seg { display: none; }
 
   /* ---------- hoja ---------- */
   .page { position: relative; width: 210mm; height: 297mm; margin: 16px auto; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.25); overflow: hidden; }
   .abs { position: absolute; }
   .box { left: 12.1mm; width: 181.3mm; }
-  .L { border-color: var(--t) !important; }
 
-  input { border: 0; outline: 0; background: transparent; font-family: Arial, Helvetica, sans-serif; font-size: 8.6pt;
-    text-transform: uppercase; padding: 0 1mm; width: 100%; height: 100%; color: var(--dato); min-width: 0; }
-  input.c { text-align: center; }
-  input:hover { background: #eef2ff; }
-  input:focus { background: #e1e8ff; }
+  #page input { border: 0; outline: 0; background: transparent; font-family: Arial, Helvetica, sans-serif; font-size: 8.6pt;
+    text-transform: uppercase; padding: 0 1mm; width: 100%; height: 100%; color: var(--dato); min-width: 0; border-radius: 1.5px; }
+  #page input.c { text-align: center; }
+  @media screen {
+    #page input { background: #f3f5fc; transition: background .15s, box-shadow .15s; }
+    #page input:hover { background: #e8edfb; }
+    #page input:focus { background: #fff; box-shadow: inset 0 0 0 1.4px var(--foco), 0 0 0 2px rgba(61,86,201,.15); position: relative; z-index: 1; }
+    #page input.lleno { background: #fafbff; }
+    #page input.lleno:focus { background: #fff; }
+  }
 
   .e { outline: none; }
   body.editando .e { outline: 1px dashed #d4a300; outline-offset: 1px; cursor: text; background: #fffbe6; }
@@ -51,7 +60,7 @@
     font-weight: 900; font-size: 19pt; letter-spacing: .2px; }
   .rep { left: 136mm; top: 13.5mm; width: 58mm; text-align: center; font-size: 13.5pt; }
   .num { left: 151mm; top: 21.6mm; width: 36mm; }
-  .num input { font-size: 19pt; text-align: center; padding: 0; letter-spacing: .5px; height: 9mm; color: var(--rojo); }
+  #page .num input { font-size: 19pt; text-align: center; padding: 0; letter-spacing: .5px; height: 9mm; color: var(--rojo); }
 
   .main { top: 33.2mm; height: 40.1mm; display: flex; border: 0.35mm solid var(--t); border-bottom: 0; }
   .col { height: 100%; }
@@ -63,7 +72,7 @@
   .grid6 { display: grid; grid-template-columns: repeat(6, 1fr); height: 100%; width: 100%; }
   .grid6 > div { border-right: 0.35mm solid var(--t); display: flex; align-items: center; justify-content: center; font-size: 7.6pt; }
   .grid6 > div:nth-child(6n) { border-right: 0; }
-  .grid6 input { padding: 0; font-size: 8pt; text-align: center; }
+  #page .grid6 input { padding: 0; font-size: 8pt; text-align: center; }
   .half { width: 50%; text-align: center; font-size: 9.4pt; height: 100%; line-height: 3.6mm; }
 
   .cm .row { border-bottom: 0; padding: 0 2.8mm 0 2.6mm; align-items: flex-end; }
@@ -74,29 +83,29 @@
   .two { display: flex; height: 100%; width: 100%; }
   .two > div:first-child { width: 33mm; border-right: 0.35mm solid var(--t); }
   .two > div:last-child { flex: 1; }
-  .cellin { display: flex; align-items: center; height: 5.4mm; padding-left: 2.2mm; }
+  .cellin { display: flex; align-items: center; height: 5.4mm; padding: 0 1mm 0 2.2mm; }
   .cellin .lbl { font-size: 9.6pt; }
 
   .lines { top: 73.3mm; border-left: 0.35mm solid var(--t); border-right: 0.35mm solid var(--t); }
-  .ln { height: 5.45mm; border-top: 0.35mm solid var(--t); display: flex; align-items: flex-end; padding: 0 0 .2mm 2.6mm; }
+  .ln { height: 5.45mm; border-top: 0.35mm solid var(--t); display: flex; align-items: flex-end; padding: 0 1mm .2mm 2.6mm; }
   .ln .lbl { font-size: 10.5pt; margin-right: 1mm; padding-bottom: .3mm; }
-  .ln input { height: 4.4mm; }
-  .ln .ul { flex: 1; border-bottom: 0.3mm solid var(--t); height: 4.4mm; margin-right: 1.5mm; }
+  #page .ln input { height: 4.4mm; }
+  .ln .ul { flex: 1; border-bottom: 0.3mm solid var(--t); height: 4.4mm; margin-right: .5mm; }
 
   .meas { top: 144.2mm; border: 0.35mm solid var(--t); border-bottom: 0; }
   .meas table { border-collapse: collapse; width: 100%; table-layout: fixed; }
   .meas td { border: 0.35mm solid var(--t); border-top: 0; height: 5.3mm; padding: 0 .8mm; font-size: 10pt; white-space: nowrap; }
   .meas td:first-child { border-left: 0; }
   .meas td:last-child { border-right: 0; }
-  .meas .f { display: flex; align-items: center; height: 100%; }
-  .meas .f input { flex: 1; }
+  .meas .f { display: flex; align-items: center; height: 100%; gap: .5mm; }
+  #page .meas .f input { flex: 1; height: 4.3mm; }
   sub { font-size: 7pt; }
 
   .obs { top: 154.8mm; height: 11.2mm; border: 0.35mm solid var(--t); border-top: 0; }
   .obs .ln { border-top: 0; height: 5.6mm; }
 
   .mat { top: 171mm; border-collapse: collapse; table-layout: fixed; border: 0.5mm solid var(--t); }
-  .mat td, .mat th { border: 0.35mm solid var(--t); height: 5.42mm; padding: 0; font-size: 9pt; }
+  .mat td, .mat th { border: 0.35mm solid var(--t); height: 5.42mm; padding: .35mm; font-size: 9pt; }
   .mat th { font-weight: normal; height: 5.8mm; font-size: 10pt; }
   .mat td.n { text-align: center; }
 
@@ -107,48 +116,123 @@
   .horas .h > div { flex: 1; }
   .horas .h > div:first-child { border-right: 0.35mm solid var(--t); }
   .horas .h1 { height: 8.4mm; } .horas .h1 > div { display: flex; align-items: center; justify-content: center; font-size: 9pt; }
-  .horas .h2 { height: 9.9mm; } .horas .h2 input { padding-left: 4.5mm; font-size: 9pt; }
+  .horas .h2 { height: 9.9mm; } .horas .h2 > div { padding: 1.2mm; } #page .horas .h2 input { padding-left: 3.3mm; font-size: 9pt; }
   .nota { padding: 2.6mm 2mm 0 2mm; font-size: 8.1pt; line-height: 1.28; text-align: justify; }
 
   .footline { left: 12.1mm; top: 281.6mm; width: 184.6mm; border-top: 0.35mm solid var(--t); }
-  .foot { left: 12.1mm; top: 283.6mm; width: 184.6mm; text-align: center; font-size: 8.6pt;
-    font-family: "Arial Narrow", Arial, sans-serif; }
+  .foot { left: 12.1mm; top: 283.6mm; width: 184.6mm; text-align: center; font-size: 8.6pt; font-family: "Arial Narrow", Arial, sans-serif; }
+
+  /* firma del gerente técnico */
+  .firmaGer { left: 15.5mm; top: 257.6mm; width: 50mm; height: 11.2mm; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+  .firmaGer img.trazo { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .sello { display: flex; align-items: center; gap: 1.2mm; height: 11mm; color: #000; }
+  .sello img { height: 10.6mm; width: 10.6mm; image-rendering: pixelated; }
+  .sello .tx { font-size: 5pt; line-height: 1.15; text-align: left; max-width: 36mm; }
+  .sello .tx b { display: block; font-size: 6.8pt; line-height: 1.1; margin-top: .3mm; text-transform: uppercase; }
+  .sello .tx i { display: block; font-style: normal; font-size: 4.8pt; margin-top: .4mm; color: #333; }
+
+  /* ---------- formulario para celular ---------- */
+  #movil { display: none; padding: 10px 10px 90px; max-width: 640px; margin: 0 auto; }
+  .sec { background: #fff; border-radius: 14px; padding: 14px 14px 6px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(20,30,80,.08), 0 4px 14px rgba(20,30,80,.06); }
+  .sec h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; color: var(--barra); display: flex; align-items: center; gap: 8px; }
+  .sec h3::before { content: ''; width: 4px; height: 15px; border-radius: 2px; background: var(--t); }
+  .fld { margin-bottom: 10px; min-width: 0; }
+  .fld label { display: block; font-size: 11.5px; color: #5b6385; margin: 0 0 4px 2px; font-weight: bold; letter-spacing: .2px; }
+  .fld input, .fld textarea { width: 100%; font: inherit; font-size: 16px; color: var(--dato); background: #f6f7fc; border: 1px solid #d5daee; border-radius: 9px;
+    padding: 10px 11px; text-transform: uppercase; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+  .fld textarea { resize: vertical; min-height: 84px; line-height: 1.35; }
+  .fld input:focus, .fld textarea:focus { background: #fff; border-color: var(--foco); box-shadow: 0 0 0 3px rgba(61,86,201,.16); }
+  .fld .aviso { font-size: 11.5px; color: #b3261e; margin: 3px 2px 0; display: none; }
+  .fld .aviso.ver { display: block; }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
+  .sub { font-size: 12px; color: #5b6385; margin: 2px 2px 6px; font-weight: bold; }
+  .matrow { display: grid; grid-template-columns: 26px 1fr 78px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .matrow .n { font-size: 13px; color: #5b6385; text-align: center; font-weight: bold; }
+  .matrow input { width: 100%; font: inherit; font-size: 16px; color: var(--dato); background: #f6f7fc; border: 1px solid #d5daee; border-radius: 9px; padding: 9px 10px; text-transform: uppercase; outline: none; }
+  .matrow input:focus { background: #fff; border-color: var(--foco); box-shadow: 0 0 0 3px rgba(61,86,201,.16); }
+  .chip { display: none; align-items: center; gap: 8px; background: #e9f7ef; color: #17643a; border: 1px solid #bfe6cf; border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: -2px 0 10px; }
+  .chip.ver { display: flex; }
 
   /* ---------- ventanas ---------- */
   .velo { position: fixed; inset: 0; background: rgba(15,20,45,.55); z-index: 50; display: none; align-items: flex-start; justify-content: center; padding: 6vh 12px; }
   .velo.ver { display: flex; }
-  .modal { background: #fff; color: #222; width: min(760px, 100%); max-height: 86vh; display: flex; flex-direction: column; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
-  .modal header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e3e5ee; }
+  .modal { background: #fff; color: #222; width: min(760px, 100%); max-height: 88vh; display: flex; flex-direction: column; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.35); overflow: hidden; }
+  .modal header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e3e5ee; flex-wrap: wrap; }
   .modal header h2 { margin: 0; font-size: 17px; color: var(--barra); flex: 1; }
-  .tabs button { font: inherit; font-size: 13px; padding: 5px 10px; border: 1px solid #c9cde0; background: #fff; border-radius: 4px; cursor: pointer; }
-  .tabs button.act { background: var(--barra); color: #fff; border-color: var(--barra); }
-  .modal .buscar { margin: 12px 16px 6px; padding: 8px 10px; border: 1px solid #c9cde0; border-radius: 5px; font-size: 14px; text-transform: none; height: auto; width: auto; color: #222; background: #fff; }
-  .lista { overflow: auto; padding: 4px 16px 16px; }
-  .item { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid #eef0f5; }
-  .item:hover { background: #f5f7ff; }
+  .tabs { display: inline-flex; background: #eef0f7; border-radius: 8px; padding: 3px; gap: 2px; }
+  .tabs button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: #444; }
+  .tabs button.act { background: #fff; color: var(--barra); font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .modal .buscar { margin: 12px 16px 6px; padding: 10px 12px; border: 1px solid #d5daee; border-radius: 9px; font-size: 15px; color: #222; background: #f6f7fc; outline: none; }
+  .modal .buscar:focus { border-color: var(--foco); background: #fff; }
+  .lista { overflow: auto; padding: 6px 16px 16px; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 11px 10px; border: 1px solid #eceef6; border-radius: 10px; margin-bottom: 8px; }
+  .item:hover { background: #f7f8fe; border-color: #dfe3f3; }
+  .av { width: 40px; height: 40px; border-radius: 50%; background: #e4e8fb; color: var(--barra); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex: none; }
+  .av.rep { border-radius: 9px; font-size: 11px; background: #f6e9eb; color: var(--rojo); }
   .item .info { flex: 1; min-width: 0; cursor: pointer; }
-  .item .t { font-weight: bold; color: var(--barra); font-size: 14px; }
-  .item .s { font-size: 12.5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item button { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid #d9b3b3; color: #9b2c2c; background: #fff; border-radius: 4px; cursor: pointer; }
-  .vacio { padding: 24px; text-align: center; color: #777; font-size: 14px; }
-  .x { font: inherit; font-size: 20px; border: 0; background: none; cursor: pointer; color: #555; line-height: 1; }
+  .item .t { font-weight: bold; color: var(--barra); font-size: 14.5px; }
+  .item .s { font-size: 12.5px; color: #666; margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .item .acc { display: flex; gap: 6px; flex: none; }
+  .item .acc button { font: inherit; font-size: 12.5px; padding: 6px 10px; border-radius: 7px; cursor: pointer; border: 1px solid #cfd5ea; background: #fff; color: var(--barra); }
+  .item .acc button.del { border-color: #ecc8c8; color: #9b2c2c; }
+  .vacio { padding: 28px; text-align: center; color: #777; font-size: 14px; }
+  .x { font: inherit; font-size: 22px; border: 0; background: none; cursor: pointer; color: #555; line-height: 1; padding: 0 4px; }
 
-  .login { background: #fff; color: #222; width: min(420px, 100%); border-radius: 8px; padding: 24px; text-align: center; }
+  .fbody { padding: 14px 16px 16px; overflow: auto; }
+  .fbody p { margin: 0 0 10px; font-size: 13.5px; color: #555; }
+  .pad { width: 100%; height: 190px; border: 1.5px dashed #b9c1e2; border-radius: 10px; background: #fbfcff; touch-action: none; display: block; }
+  .fbody .fld input { text-transform: none; }
+  .fprev { margin-top: 12px; border: 1px solid #e3e5ee; border-radius: 10px; padding: 12px; display: flex; justify-content: center; min-height: 80px; align-items: center; background: #fff; }
+  .fprev img { max-height: 90px; max-width: 100%; }
+  .fprev .sello { height: auto; transform: scale(1.6); transform-origin: center; margin: 22px 0; }
+  .facc { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+  .facc button { font: inherit; font-size: 14px; padding: 9px 16px; border-radius: 8px; cursor: pointer; border: 1px solid #cfd5ea; background: #fff; color: var(--barra); }
+  .facc button.pri { background: var(--barra); color: #fff; border-color: var(--barra); font-weight: bold; }
+  .panel { display: none; } .panel.act { display: block; }
+
+  .login { background: #fff; color: #222; width: min(420px, 100%); border-radius: 12px; padding: 24px; text-align: center; }
   .login img { width: 200px; }
   .login p { color: #555; font-size: 14px; }
-  .login input { border: 1px solid #c9cde0; border-radius: 5px; padding: 9px; height: auto; text-transform: none; font-size: 14px; margin: 8px 0; color: #222; background: #fff; }
-  .login button { font: inherit; padding: 9px 16px; background: var(--barra); color: #fff; border: 0; border-radius: 5px; cursor: pointer; width: 100%; }
+  .login input { width: 100%; border: 1px solid #d5daee; border-radius: 9px; padding: 11px; font-size: 16px; margin: 8px 0; color: #222; background: #f6f7fc; outline: none; }
+  .login input:focus { border-color: var(--foco); background: #fff; }
+  .login button { font: inherit; padding: 11px 16px; background: var(--barra); color: #fff; border: 0; border-radius: 9px; cursor: pointer; width: 100%; font-size: 15px; }
 
-  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1f2a63; color: #fff; padding: 10px 18px;
-    border-radius: 6px; font-size: 14px; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; }
+  /* aviso emergente */
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(16px); background: #fff; color: #222; padding: 12px 16px 12px 12px;
+    border-radius: 12px; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 30px rgba(10,20,60,.25); border: 1px solid #e5e8f3; min-width: 260px; max-width: calc(100vw - 24px); }
   .toast.ver { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.err { background: #9b2c2c; }
+  .toast .ic { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex: none; background: #e6f6ed; color: var(--ok); font-weight: bold; }
+  .toast.info .ic { background: #e6ebfb; color: var(--foco); }
+  .toast.err .ic { background: #fbe9e9; color: #b3261e; }
+  .toast .tt { font-weight: bold; font-size: 14px; color: #1b2149; }
+  .toast .ts { font-size: 12.5px; color: #5b6385; margin-top: 1px; }
+
+  /* ---------- celular ---------- */
+  @media (max-width: 820px) {
+    body { overflow-x: hidden; }
+    .toolbar { flex-wrap: nowrap; overflow-x: auto; padding: 8px; gap: 6px; scrollbar-width: none; }
+    .toolbar::-webkit-scrollbar { display: none; }
+    .toolbar .marca, .toolbar .estado { display: none; }
+    .btn { padding: 8px 11px; font-size: 13px; }
+    .seg { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border-bottom: 1px solid #e1e4ef; }
+    .seg .tabs { flex: none; }
+    .seg .estado { display: inline-flex; color: #5b6385; margin-left: auto; font-size: 12px; text-align: right; }
+    .seg .estado.sucio { color: #a66b00; font-weight: bold; }
+    body.vista-form #movil { display: block; }
+    body.vista-form .page { display: none; }
+    .page { margin: 10px 8px; }
+    .velo { padding: 0; align-items: flex-end; }
+    .modal { max-height: 92vh; border-radius: 16px 16px 0 0; }
+    .item { flex-wrap: wrap; }
+    .item .acc { width: 100%; justify-content: flex-end; }
+  }
 
   @media print {
     html, body { background: #fff; }
-    .toolbar, .editbar, .velo, .toast { display: none !important; }
-    .page { margin: 0; box-shadow: none; zoom: 1 !important; }
-    input:hover, input:focus { background: transparent; }
+    .top, .velo, .toast, #movil { display: none !important; }
+    .page { display: block !important; margin: 0; box-shadow: none; zoom: 1 !important; }
     body.editando .e { outline: 0; background: none; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -156,30 +240,40 @@
 </head>
 <body>
 
-<div class="toolbar">
-  <span class="marca">CIRELEC · Reportes</span>
-  <button class="btn" id="bNuevo">＋ Nuevo</button>
-  <button class="btn pri" id="bGuardar">💾 Guardar</button>
-  <button class="btn" id="bImprimir">🖨 Imprimir / PDF</button>
-  <button class="btn" id="bHistorial">📂 Reportes y clientes</button>
-  <button class="btn" id="bEditar">✏️ Editar títulos</button>
-  <span class="estado" id="estado"></span>
-</div>
-<div class="editbar">
-  <b>Modo edición de títulos:</b> haz clic en cualquier texto del formato para cambiarlo. Se guarda con este reporte al presionar Guardar.
-  <button id="bPredet">Usar este formato para reportes nuevos</button>
-  <button id="bOriginal">Restaurar formato original</button>
+<div class="top">
+  <div class="toolbar">
+    <span class="marca">CIRELEC · Reportes</span>
+    <button class="btn" id="bNuevo">＋ Nuevo</button>
+    <button class="btn pri" id="bGuardar">💾 Guardar</button>
+    <button class="btn" id="bFirmar" title="Firma del Gerente Técnico">✍️ Firmar</button>
+    <button class="btn" id="bImprimir">🖨 Imprimir / PDF</button>
+    <button class="btn" id="bHistorial">📂 Reportes y clientes</button>
+    <button class="btn" id="bEditar">✏️ Editar títulos</button>
+    <button class="btn" id="bConfFirma" title="Configurar firma">⚙️ Firma</button>
+    <span class="estado" id="estado"></span>
+  </div>
+  <div class="seg">
+    <div class="tabs"><button id="vForm" class="act">📝 Llenar</button><button id="vHoja">📄 Hoja</button></div>
+    <span class="estado" id="estadoM"></span>
+  </div>
+  <div class="editbar">
+    <b>Modo edición de títulos:</b> toca cualquier texto del formato para cambiarlo. Los cambios se guardan para todos los reportes.
+    <button id="bOriginal">Restaurar formato original</button>
+  </div>
 </div>
 
 <datalist id="dlClientes"></datalist>
 
+<!-- ================= FORMULARIO CELULAR ================= -->
+<div id="movil"></div>
+
+<!-- ================= HOJA ================= -->
 <div class="page" id="page">
   <img class="abs logo" src="logo.png" alt="CIRELEC Element Circuit">
   <div class="abs gen e">GENERADORES</div>
   <div class="abs rep e">REPORTE DE TRABAJO</div>
   <div class="abs num"><input data-f="numero" aria-label="Número de reporte"></div>
 
-  <!-- BLOQUE PRINCIPAL -->
   <div class="abs box main">
     <div class="col cl">
       <div class="row" style="height:3.54mm;justify-content:center;font-size:10pt"><span class="e">FECHAS REALES</span></div>
@@ -214,8 +308,8 @@
 
     <div class="col cr">
       <div class="row" style="height:5.6mm;justify-content:center;font-size:12.5pt"><span class="e">TECNICO (S)</span></div>
-      <div class="row" style="height:5.97mm"><input data-f="tecnico1" style="padding-left:2.6mm"></div>
-      <div class="row" style="height:5.6mm"><input data-f="tecnico2" style="padding-left:2.6mm"></div>
+      <div class="row" style="height:5.97mm;padding:.5mm 1mm"><input data-f="tecnico1" style="padding-left:1.6mm"></div>
+      <div class="row" style="height:5.6mm;padding:.5mm 1mm"><input data-f="tecnico2" style="padding-left:1.6mm"></div>
       <div class="row" style="height:11.19mm;align-items:flex-start">
         <div class="two">
           <div><div class="cellin"><span class="lbl e">Serie:</span><input data-f="motor_serie"></div></div>
@@ -234,7 +328,6 @@
     </div>
   </div>
 
-  <!-- DESCRIPCIÓN / DAÑOS / TRABAJOS -->
   <div class="abs box lines">
     <div class="ln"><span class="lbl e">Descripción del Trabajo:</span><div class="ul"><input data-f="desc1"></div></div>
     <div class="ln"><input data-f="desc2"></div>
@@ -251,7 +344,6 @@
     <div class="ln"><input data-f="trab9"></div>
   </div>
 
-  <!-- MEDICIONES -->
   <div class="abs box meas">
     <table>
       <colgroup><col style="width:29.8mm"><col style="width:30.4mm"><col style="width:29.8mm"><col style="width:27.8mm"><col style="width:29.1mm"><col></colgroup>
@@ -278,16 +370,15 @@
     <div class="ln"><div class="ul" style="margin-right:0"><input data-f="obs2"></div></div>
   </div>
 
-  <!-- MATERIALES -->
   <table class="abs box mat">
     <colgroup><col style="width:7.5mm"><col style="width:71.2mm"><col style="width:11.7mm"><col style="width:7.5mm"><col style="width:70.9mm"><col></colgroup>
     <thead><tr><th class="e">Nº</th><th class="e">MATERIAL Y/O REPUESTOS UTILIZADOS</th><th class="e">Cant.</th><th class="e">Nº</th><th class="e">MATERIAL Y/O REPUESTOS UTILIZADOS</th><th class="e">Cant.</th></tr></thead>
     <tbody id="matBody"></tbody>
   </table>
 
-  <!-- PIE -->
   <div class="abs recibo e">RECIBO EL EQUIPO A ENTERA SATISFACCIÓN</div>
   <div class="abs sig e" style="left:23.3mm;top:250.5mm;width:34.5mm">Técnico</div>
+  <div class="abs firmaGer" id="firmaGer"></div>
   <div class="abs sig e" style="left:23.3mm;top:269mm;width:34.5mm">Gerente Técnico</div>
   <div class="abs" style="left:88.6mm;top:264.3mm;width:34.5mm;height:4.6mm"><input data-f="recibido" class="c" style="font-size:9.4pt"></div>
   <div class="abs sig e" style="left:88.6mm;top:269mm;width:34.5mm">Cliente</div>
@@ -306,12 +397,12 @@
   <div class="abs foot e">Cel.: 0994 856 811, E-mail: cirelec@hotmail.com - Quito</div>
 </div>
 
-<!-- Historial -->
+<!-- Reportes y clientes -->
 <div class="velo" id="vHist">
   <div class="modal">
     <header>
       <h2>Guardados</h2>
-      <div class="tabs"><button id="tRep" class="act">Reportes</button> <button id="tCli">Clientes</button></div>
+      <div class="tabs"><button id="tRep" class="act">Reportes</button><button id="tCli">Clientes</button></div>
       <button class="x" data-cerrar>×</button>
     </header>
     <input class="buscar" id="buscar" placeholder="Buscar por número, cliente o descripción…">
@@ -319,8 +410,42 @@
   </div>
 </div>
 
+<!-- Configurar firma -->
+<div class="velo" id="vFirma">
+  <div class="modal" style="width:min(560px,100%)">
+    <header>
+      <h2>Firma del Gerente Técnico</h2>
+      <button class="x" data-cerrar>×</button>
+    </header>
+    <div class="fbody">
+      <p>Esta firma aparece sobre la línea de <b>Gerente Técnico</b> cuando presionas <b>✍️ Firmar</b>. Se configura una sola vez.</p>
+      <div class="tabs" style="margin-bottom:12px">
+        <button data-p="pDib" class="act">Dibujar</button><button data-p="pImg">Subir imagen</button><button data-p="pSel">Sello electrónico</button>
+      </div>
+      <div class="panel act" id="pDib">
+        <canvas class="pad" id="pad"></canvas>
+        <div class="facc" style="justify-content:flex-start;margin-top:8px"><button id="padLimpiar">Borrar trazo</button></div>
+      </div>
+      <div class="panel" id="pImg">
+        <p>Sube una foto o escaneo de la firma (mejor con fondo blanco).</p>
+        <input type="file" id="fImg" accept="image/*">
+      </div>
+      <div class="panel" id="pSel">
+        <p>Genera un sello con código QR, al estilo de la firma electrónica.</p>
+        <div class="fld"><label>Nombre completo</label><input id="sNombre" placeholder="Ej. JUAN PÉREZ LÓPEZ"></div>
+        <div class="fld"><label>Cargo</label><input id="sCargo" value="GERENTE TÉCNICO"></div>
+      </div>
+      <div class="fprev" id="fPrev"><span style="color:#999;font-size:13px">Vista previa</span></div>
+      <div class="facc">
+        <button data-cerrar>Cancelar</button>
+        <button class="pri" id="bGuardarFirma">Guardar firma</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Acceso -->
-<div class="velo" id="vLogin">
+<div class="velo" id="vLogin" style="align-items:center;padding:12px">
   <div class="login">
     <img src="logo.png" alt="CIRELEC">
     <h3 style="color:var(--barra)">Acceso restringido</h3>
@@ -331,27 +456,30 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><div class="ic" id="tIc">✓</div><div><div class="tt" id="tT"></div><div class="ts" id="tS"></div></div></div>
 
 <script>
-// ---------- utilidades ----------
+// ================= utilidades =================
 const $ = (s) => document.querySelector(s);
 const MESES = ['ENE.', 'FEB.', 'MAR.', 'ABR.', 'MAY.', 'JUN.', 'JUL.', 'AGO.', 'SEP.', 'OCT.', 'NOV.', 'DIC.'];
 const CAMPOS_CLIENTE = ['cliente', 'direccion', 'telefono', 'equipo', 'marca', 'modelo', 'serie', 'motor', 'motor_modelo',
   'motor_serie', 'horas', 'alternador', 'alt_modelo', 'alt_serie', 'kw_kva'];
 
-function toast(msg, err) {
-  const t = $('#toast'); t.textContent = msg; t.className = 'toast ver' + (err ? ' err' : '');
-  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2600);
+function toast(titulo, sub = '', tipo = 'ok') {
+  const t = $('#toast');
+  $('#tT').textContent = titulo; $('#tS').textContent = sub; $('#tS').style.display = sub ? '' : 'none';
+  $('#tIc').textContent = tipo === 'err' ? '!' : tipo === 'info' ? 'i' : '✓';
+  t.className = 'toast ver ' + tipo;
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast ' + tipo, 3200);
 }
+const iniciales = (s) => (s || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-// filas de materiales
-const body = $('#matBody');
+// filas de materiales de la hoja
 for (let i = 1; i <= 9; i++) {
   const tr = document.createElement('tr');
   tr.innerHTML = `<td class="n">${i}</td><td><input data-f="m${i}"></td><td><input class="c" data-f="m${i}_c"></td>` +
                  `<td class="n">${i + 9}</td><td><input data-f="m${i + 9}"></td><td><input class="c" data-f="m${i + 9}_c"></td>`;
-  body.appendChild(tr);
+  $('#matBody').appendChild(tr);
 }
 
 const inputs = [...document.querySelectorAll('#page input[data-f]')];
@@ -359,7 +487,142 @@ const campo = (f) => document.querySelector(`#page input[data-f="${f}"]`);
 const etiquetasEl = [...document.querySelectorAll('#page .e')];
 const ORIGINAL = etiquetasEl.map(e => e.innerHTML);
 
-// ---------- acceso ----------
+// ================= textos largos repartidos en líneas =================
+const GRUPOS = {
+  desc: ['desc1', 'desc2'],
+  danos: ['danos1', 'danos2'],
+  trab: ['trab1', 'trab2', 'trab3', 'trab4', 'trab5', 'trab6', 'trab7', 'trab8', 'trab9'],
+  obs: ['obs1', 'obs2'],
+};
+// ancho disponible de cada línea (se mide con la hoja sin escalar)
+const ctx = document.createElement('canvas').getContext('2d');
+const cs0 = getComputedStyle(campo('trab2'));
+ctx.font = `${cs0.fontSize} ${cs0.fontFamily}`;
+const ANCHO = {};
+Object.values(GRUPOS).flat().forEach(f => {
+  const el = campo(f), cs = getComputedStyle(el);
+  ANCHO[f] = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 3;
+});
+const mide = (s) => ctx.measureText(s.toUpperCase()).width;
+
+function repartir(texto, campos) {
+  const lineas = []; let i = 0;
+  for (const parrafo of texto.split('\n')) {
+    let actual = '';
+    const empujar = () => { lineas.push(actual); actual = ''; i++; };
+    const palabras = parrafo.split(/\s+/).filter(Boolean);
+    if (!palabras.length) { empujar(); continue; }
+    for (let p of palabras) {
+      const w = () => ANCHO[campos[Math.min(i, campos.length - 1)]];
+      const prueba = actual ? actual + ' ' + p : p;
+      if (mide(prueba) <= w()) { actual = prueba; continue; }
+      if (actual) empujar();
+      while (mide(p) > w()) {               // palabra más larga que la línea
+        let k = p.length; while (k > 1 && mide(p.slice(0, k)) > w()) k--;
+        actual = p.slice(0, k); empujar(); p = p.slice(k);
+      }
+      actual = p;
+    }
+    empujar();
+  }
+  return { lineas: campos.map((_, j) => lineas[j] || ''), sobra: lineas.slice(campos.length).some(Boolean) };
+}
+const unir = (campos) => {
+  const v = campos.map(f => campo(f).value);
+  while (v.length && !v[v.length - 1]) v.pop();
+  return v.join('\n');
+};
+
+// ================= formulario para celular =================
+const SECCIONES = [
+  ['Reporte', [['g2', [['numero', 'Nº de reporte']]]]],
+  ['Fechas reales', [['sub', 'Inicio'], ['g3', [['ini_mes', 'Mes'], ['ini_dia', 'Día'], ['ini_anio', 'Año']]],
+                     ['sub', 'Final'], ['g3', [['fin_mes', 'Mes'], ['fin_dia', 'Día'], ['fin_anio', 'Año']]]]],
+  ['Cliente', [['', [['cliente', 'Cliente']]], ['chip'], ['', [['direccion', 'Dirección'], ['telefono', 'Teléfono']]]]],
+  ['Equipo', [['g2', [['equipo', 'Equipo'], ['marca', 'Marca'], ['modelo', 'Modelo'], ['serie', 'Serie Nº']]]]],
+  ['Motor', [['g2', [['motor', 'Motor'], ['motor_modelo', 'Modelo'], ['motor_serie', 'Serie'], ['horas', 'Horas']]]]],
+  ['Alternador', [['g2', [['alternador', 'Alternador'], ['alt_modelo', 'Modelo'], ['alt_serie', 'Serie'], ['kw_kva', 'KW / KVA']]]]],
+  ['Técnico(s)', [['', [['tecnico1', 'Técnico 1'], ['tecnico2', 'Técnico 2']]]]],
+  ['Trabajo', [['txt', 'desc', 'Descripción del trabajo'], ['txt', 'danos', 'Daños encontrados'], ['txt', 'trab', 'Trabajos efectuados']]],
+  ['Mediciones', [['g3', [['kw', 'KW'], ['kva', 'KVA'], ['p_aceite', 'P. Aceite'], ['v_bat', 'V. Bat'], ['th2o', 'TH₂O'], ['h2', 'H₂'],
+                          ['l1', 'L1 (A)'], ['l2', 'L2 (A)'], ['l3', 'L3 (A)'], ['vv', 'V-V (V)'], ['vn', 'V-N (V)']]]]],
+  ['Observaciones', [['txt', 'obs', 'Observaciones']]],
+  ['Materiales y/o repuestos', [['mat']]],
+  ['Entrega', [['g2', [['hora_entrada', 'Hora de entrada'], ['hora_salida', 'Hora de salida']]], ['', [['recibido', 'Recibido (firma cliente)'], ['nombre_recibe', 'Nombre de quien recibe']]]]],
+];
+
+const movil = $('#movil');
+const mIn = {};      // campo -> input del celular
+const mTxt = {};     // grupo -> textarea del celular
+
+function crearCampo(f, etiqueta, padre) {
+  const d = document.createElement('div'); d.className = 'fld';
+  const l = document.createElement('label'); l.textContent = etiqueta;
+  const i = document.createElement('input');
+  i.autocomplete = 'off';
+  if (f === 'cliente') i.setAttribute('list', 'dlClientes');
+  i.addEventListener('input', () => { campo(f).value = i.value; pintarLleno(campo(f)); marcar(true); if (f === 'cliente') revisarCliente(i.value, true); });
+  i.addEventListener('change', () => { if (f === 'cliente') autocompletarCliente(); });
+  d.append(l, i); padre.appendChild(d); mIn[f] = i;
+}
+
+function filaMat(n, cont) {
+  const r = document.createElement('div'); r.className = 'matrow';
+  const num = document.createElement('div'); num.className = 'n'; num.textContent = n;
+  const a = document.createElement('input'); a.placeholder = 'Material o repuesto';
+  const b = document.createElement('input'); b.placeholder = 'Cant.';
+  [[a, 'm' + n], [b, `m${n}_c`]].forEach(([el, f]) => {
+    mIn[f] = el;
+    el.addEventListener('input', () => { campo(f).value = el.value; pintarLleno(campo(f)); marcar(true); ajustarMat(); });
+  });
+  r.append(num, a, b); cont.appendChild(r);
+}
+let matCont;
+function ajustarMat() {
+  let ult = 0;
+  for (let n = 1; n <= 18; n++) if (campo('m' + n).value || campo(`m${n}_c`).value) ult = n;
+  const ver = Math.min(18, Math.max(ult + 1, 3));
+  [...matCont.children].forEach((r, i) => r.style.display = i < ver ? '' : 'none');
+}
+
+SECCIONES.forEach(([titulo, bloques]) => {
+  const s = document.createElement('section'); s.className = 'sec';
+  const h = document.createElement('h3'); h.textContent = titulo; s.appendChild(h);
+  bloques.forEach(b => {
+    if (b[0] === 'sub') { const p = document.createElement('div'); p.className = 'sub'; p.textContent = b[1]; s.appendChild(p); return; }
+    if (b[0] === 'chip') { const c = document.createElement('div'); c.className = 'chip'; c.id = 'chipCli'; s.appendChild(c); return; }
+    if (b[0] === 'mat') { matCont = document.createElement('div'); for (let n = 1; n <= 18; n++) filaMat(n, matCont); s.appendChild(matCont); return; }
+    if (b[0] === 'txt') {
+      const [, g, etq] = b;
+      const d = document.createElement('div'); d.className = 'fld';
+      const l = document.createElement('label'); l.textContent = etq;
+      const t = document.createElement('textarea'); t.rows = g === 'trab' ? 6 : 2;
+      const av = document.createElement('div'); av.className = 'aviso'; av.textContent = 'El texto no entra en el espacio de la hoja; acórtalo un poco.';
+      t.addEventListener('input', () => {
+        const r = repartir(t.value, GRUPOS[g]);
+        GRUPOS[g].forEach((f, j) => { campo(f).value = r.lineas[j]; pintarLleno(campo(f)); });
+        av.classList.toggle('ver', r.sobra);
+        marcar(true);
+      });
+      d.append(l, t, av); s.appendChild(d); mTxt[g] = t;
+      return;
+    }
+    const cont = document.createElement('div'); if (b[0]) cont.className = b[0];
+    b[1].forEach(([f, etq]) => crearCampo(f, etq, cont));
+    s.appendChild(cont);
+  });
+  movil.appendChild(s);
+});
+
+// pasa los datos de la hoja al formulario del celular
+function syncMovil() {
+  Object.entries(mIn).forEach(([f, el]) => el.value = campo(f).value);
+  Object.entries(mTxt).forEach(([g, t]) => t.value = unir(GRUPOS[g]));
+  ajustarMat();
+  revisarCliente(campo('cliente').value, false);
+}
+
+// ================= acceso =================
 const KEY_LS = 'cirelec-clave';
 let clave = '';
 try { clave = localStorage.getItem(KEY_LS) || ''; } catch (e) {}
@@ -371,10 +634,7 @@ if (qk) {
 }
 
 async function api(ruta, opciones = {}) {
-  const r = await fetch('/api/' + ruta, {
-    ...opciones,
-    headers: { 'content-type': 'application/json', 'x-key': clave, ...(opciones.headers || {}) },
-  });
+  const r = await fetch('/api/' + ruta, { ...opciones, headers: { 'content-type': 'application/json', 'x-key': clave, ...(opciones.headers || {}) } });
   if (r.status === 401) { mostrarLogin('Clave incorrecta o vencida.'); throw new Error('No autorizado'); }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error || 'Error ' + r.status);
@@ -389,22 +649,35 @@ $('#bEntrar').onclick = async () => {
 };
 $('#claveIn').onkeydown = (e) => { if (e.key === 'Enter') $('#bEntrar').click(); };
 
-// ---------- estado ----------
-let cargado = null;       // número del reporte abierto (si ya está guardado)
+// ================= estado =================
+let cargado = null;
 let sucio = false;
-let formatoPredet = null; // etiquetas por defecto para reportes nuevos
+let formato = null;      // títulos guardados (valen para todos los reportes)
 let clientes = [];
+let firmaCfg = null;     // firma configurada
+let firmado = false;
+let firmadoFecha = '';
 
+function textoEstado() { return sucio ? '● Cambios sin guardar' : (cargado ? `✓ Reporte ${cargado} guardado` : ''); }
 function marcar(s) {
   sucio = s;
-  const e = $('#estado');
-  e.textContent = s ? '● Cambios sin guardar' : (cargado ? `Reporte ${cargado} guardado` : '');
-  e.className = 'estado' + (s ? ' sucio' : '');
+  [$('#estado'), $('#estadoM')].forEach(e => { e.textContent = textoEstado(); e.className = 'estado' + (s ? ' sucio' : ''); });
   if (s) guardarBorrador();
 }
+const pintarLleno = (el) => el.classList.toggle('lleno', !!el.value);
 
-function leerCampos() { const d = {}; inputs.forEach(i => d[i.dataset.f] = i.value.trim()); return d; }
-function ponerCampos(d) { inputs.forEach(i => i.value = (d && d[i.dataset.f]) || ''); }
+function leerCampos() {
+  const d = {}; inputs.forEach(i => d[i.dataset.f] = i.value.trim().toUpperCase());
+  d.firmado = firmado ? '1' : ''; d.firmado_fecha = firmado ? firmadoFecha : '';
+  return d;
+}
+function ponerCampos(d) {
+  d = d || {};
+  inputs.forEach(i => { i.value = d[i.dataset.f] || ''; pintarLleno(i); });
+  firmado = d.firmado === '1'; firmadoFecha = d.firmado_fecha || '';
+  pintarFirma();
+  syncMovil();
+}
 function leerEtiquetas() { return etiquetasEl.map(e => e.innerHTML); }
 function ponerEtiquetas(arr) {
   const a = Array.isArray(arr) && arr.length === etiquetasEl.length ? arr : ORIGINAL;
@@ -412,21 +685,17 @@ function ponerEtiquetas(arr) {
 }
 
 function guardarBorrador() {
-  try { localStorage.setItem('cirelec-borrador', JSON.stringify({ cargado, campos: leerCampos(), etiquetas: leerEtiquetas() })); } catch (e) {}
+  try { localStorage.setItem('cirelec-borrador', JSON.stringify({ cargado, campos: leerCampos() })); } catch (e) {}
 }
 function borrarBorrador() { try { localStorage.removeItem('cirelec-borrador'); } catch (e) {} }
 
-// ---------- acciones ----------
+// ================= acciones =================
 async function nuevo(confirmar = true) {
   if (confirmar && sucio && !confirm('Hay cambios sin guardar. ¿Empezar un reporte nuevo de todas formas?')) return;
-  ponerCampos({});
-  ponerEtiquetas(formatoPredet);
   const hoy = new Date();
-  campo('fin_mes').value = MESES[hoy.getMonth()];
-  campo('fin_dia').value = String(hoy.getDate());
-  campo('fin_anio').value = String(hoy.getFullYear());
+  ponerCampos({ fin_mes: MESES[hoy.getMonth()], fin_dia: String(hoy.getDate()), fin_anio: String(hoy.getFullYear()) });
   cargado = null;
-  try { campo('numero').value = (await api('siguiente')).numero; } catch (e) {}
+  try { campo('numero').value = (await api('siguiente')).numero; pintarLleno(campo('numero')); syncMovil(); } catch (e) {}
   marcar(false);
   borrarBorrador();
   window.scrollTo(0, 0);
@@ -435,8 +704,8 @@ async function nuevo(confirmar = true) {
 async function guardar() {
   const d = leerCampos();
   const num = d.numero;
-  if (!num) { toast('Pon el número del reporte', true); campo('numero').focus(); return; }
-  if (!/^[0-9A-Za-z-]{1,20}$/.test(num)) { toast('El número solo puede tener letras, números y guiones', true); return; }
+  if (!num) { toast('Falta el número', 'Pon el número del reporte antes de guardar.', 'err'); return; }
+  if (!/^[0-9A-Za-z-]{1,20}$/.test(num)) { toast('Número inválido', 'Solo letras, números y guiones.', 'err'); return; }
   if (num !== cargado) {
     try {
       await api('reportes/' + encodeURIComponent(num));
@@ -445,14 +714,18 @@ async function guardar() {
   }
   const b = $('#bGuardar'); b.disabled = true; b.textContent = 'Guardando…';
   try {
-    await api('reportes/' + encodeURIComponent(num), { method: 'PUT', body: JSON.stringify({ campos: d, etiquetas: leerEtiquetas() }) });
+    const r = await api('reportes/' + encodeURIComponent(num), { method: 'PUT', body: JSON.stringify({ campos: d, etiquetas: leerEtiquetas() }) });
+    formato = leerEtiquetas();
     cargado = num;
     marcar(false);
     borrarBorrador();
-    toast(`Reporte ${num} guardado`);
-    cargarClientes();
+    if (r.clienteNuevo) toast('Cliente nuevo registrado', `${d.cliente.toUpperCase()} quedó guardado en tu lista. Reporte ${num} guardado.`);
+    else if (d.cliente) toast(`Reporte ${num} guardado`, `Datos de ${d.cliente.toUpperCase()} actualizados.`);
+    else toast(`Reporte ${num} guardado`);
+    await cargarClientes();
+    revisarCliente(d.cliente, false);
   } catch (e) {
-    toast('No se pudo guardar: ' + e.message, true);
+    toast('No se pudo guardar', e.message, 'err');
   } finally { b.disabled = false; b.textContent = '💾 Guardar'; }
 }
 
@@ -461,13 +734,13 @@ async function abrir(num) {
   try {
     const r = await api('reportes/' + encodeURIComponent(num));
     ponerCampos(r.campos);
-    ponerEtiquetas(r.etiquetas);
     cargado = r.numero;
     marcar(false);
     borrarBorrador();
     cerrarModales();
     window.scrollTo(0, 0);
-  } catch (e) { toast('No se pudo abrir: ' + e.message, true); }
+    toast(`Reporte ${num} abierto`, r.campos.cliente || '', 'info');
+  } catch (e) { toast('No se pudo abrir', e.message, 'err'); }
 }
 
 async function cargarClientes() {
@@ -477,25 +750,163 @@ async function cargarClientes() {
     clientes.forEach(c => { const o = document.createElement('option'); o.value = c.cliente; dl.appendChild(o); });
   } catch (e) {}
 }
+const buscarCliente = (v) => clientes.find(x => (x.cliente || '').trim().toUpperCase() === String(v || '').trim().toUpperCase());
 
-function autocompletarCliente() {
-  const v = campo('cliente').value.trim().toUpperCase();
-  const c = clientes.find(x => (x.cliente || '').trim().toUpperCase() === v);
-  if (!c) return;
-  CAMPOS_CLIENTE.forEach(f => { if (campo(f)) campo(f).value = c[f] || ''; });
-  marcar(true);
-  toast('Datos del cliente cargados');
+// etiqueta bajo el campo Cliente (celular)
+function revisarCliente(v, escribiendo) {
+  const chip = $('#chipCli'); if (!chip) return;
+  const c = buscarCliente(v);
+  if (c) { chip.textContent = `✓ Cliente registrado${escribiendo ? ' — toca fuera del campo para cargar sus datos' : ''}`; chip.classList.add('ver'); }
+  else chip.classList.remove('ver');
 }
 
-// ---------- historial ----------
+function autocompletarCliente() {
+  const c = buscarCliente(campo('cliente').value);
+  if (!c) return;
+  CAMPOS_CLIENTE.forEach(f => { const el = campo(f); if (el) { el.value = c[f] || ''; pintarLleno(el); } });
+  syncMovil();
+  marcar(true);
+  const det = [c.direccion, c.telefono].filter(Boolean).join(' · ');
+  toast('Cliente encontrado', `Se cargaron los datos de ${c.cliente}${det ? ' (' + det + ')' : ''}.`, 'info');
+}
+
+// ================= firma =================
+function htmlSello(cfg, extra) {
+  const txt = `FIRMADO POR: ${cfg.nombre}\nCARGO: ${cfg.cargo || ''}\n${extra || ''}`.trim();
+  let src = '';
+  try { const q = qrcode(0, 'M'); q.addData(unescape(encodeURIComponent(txt))); q.make(); src = q.createDataURL(4, 0); } catch (e) {}
+  const d = document.createElement('div'); d.className = 'sello';
+  if (src) { const im = document.createElement('img'); im.src = src; im.alt = 'QR'; d.appendChild(im); }
+  const t = document.createElement('div'); t.className = 'tx';
+  t.append('Firmado electrónicamente por:');
+  const b = document.createElement('b'); b.textContent = cfg.nombre; t.appendChild(b);
+  if (extra) { const i = document.createElement('i'); i.textContent = extra; t.appendChild(i); }
+  d.appendChild(t);
+  return d;
+}
+function pintarFirma() {
+  const cont = $('#firmaGer'); cont.innerHTML = '';
+  const bt = $('#bFirmar');
+  bt.classList.toggle('firmado', firmado);
+  bt.textContent = firmado ? '✔ Firmado' : '✍️ Firmar';
+  if (!firmado || !firmaCfg) return;
+  if (firmaCfg.tipo === 'imagen') {
+    const im = document.createElement('img'); im.className = 'trazo'; im.src = firmaCfg.imagen; im.alt = 'Firma'; cont.appendChild(im);
+  } else if (firmaCfg.tipo === 'sello') {
+    cont.appendChild(htmlSello(firmaCfg, firmadoFecha ? 'Fecha: ' + firmadoFecha : ''));
+  }
+}
+function alternarFirma() {
+  if (!firmaCfg) { toast('Primero configura la firma', 'Dibuja, sube o genera tu firma una sola vez.', 'info'); abrirConfFirma(); return; }
+  firmado = !firmado;
+  firmadoFecha = firmado ? new Date().toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  pintarFirma();
+  marcar(true);
+  toast(firmado ? 'Reporte firmado' : 'Firma quitada', firmado ? 'La firma aparece en Gerente Técnico. Recuerda Guardar.' : 'Recuerda Guardar.', firmado ? 'ok' : 'info');
+}
+
+// --- configurar firma ---
+let panelFirma = 'pDib', imgSubida = null;
+const pad = $('#pad'), pctx = pad.getContext('2d');
+let dibujando = false, hayTrazo = false;
+function prepararPad() {
+  const r = pad.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  pad.width = r.width * dpr; pad.height = r.height * dpr;
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pctx.lineWidth = 2.4; pctx.lineCap = 'round'; pctx.lineJoin = 'round'; pctx.strokeStyle = '#0d1a6b';
+  hayTrazo = false;
+}
+const pos = (e) => { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+pad.addEventListener('pointerdown', e => { dibujando = true; pad.setPointerCapture(e.pointerId); pctx.beginPath(); pctx.moveTo(...pos(e)); });
+pad.addEventListener('pointermove', e => { if (!dibujando) return; pctx.lineTo(...pos(e)); pctx.stroke(); hayTrazo = true; });
+pad.addEventListener('pointerup', () => { dibujando = false; previewFirma(); });
+$('#padLimpiar').onclick = () => { prepararPad(); previewFirma(); };
+
+// recorta los bordes vacíos de un canvas y devuelve PNG
+function recortar(cv) {
+  const c = cv.getContext('2d'), { width: w, height: h } = cv, px = c.getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = 0, y1 = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = (y * w + x) * 4;
+    if (px[k + 3] > 10 && (px[k] < 200 || px[k + 1] < 200 || px[k + 2] < 200)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 <= x0 || y1 <= y0) return null;
+  const m = 6, o = document.createElement('canvas');
+  o.width = x1 - x0 + m * 2; o.height = y1 - y0 + m * 2;
+  o.getContext('2d').drawImage(cv, x0 - m, y0 - m, o.width, o.height, 0, 0, o.width, o.height);
+  return o.toDataURL('image/png');
+}
+// imagen subida: escala, quita el fondo claro y recorta
+function procesarImagen(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const esc = Math.min(1, 900 / im.width), cv = document.createElement('canvas');
+        cv.width = im.width * esc; cv.height = im.height * esc;
+        const c = cv.getContext('2d'); c.drawImage(im, 0, 0, cv.width, cv.height);
+        const d = c.getImageData(0, 0, cv.width, cv.height);
+        for (let k = 0; k < d.data.length; k += 4) {
+          const l = (d.data[k] + d.data[k + 1] + d.data[k + 2]) / 3;
+          if (l > 185) d.data[k + 3] = 0;
+        }
+        c.putImageData(d, 0, 0);
+        res(recortar(cv));
+      };
+      im.onerror = rej; im.src = fr.result;
+    };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+$('#fImg').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { imgSubida = await procesarImagen(f); previewFirma(); } catch (er) { toast('No se pudo leer la imagen', '', 'err'); }
+};
+['#sNombre', '#sCargo'].forEach(s => $(s).addEventListener('input', previewFirma));
+
+function firmaDelPanel() {
+  if (panelFirma === 'pDib') { const p = hayTrazo && recortar(pad); return p ? { tipo: 'imagen', imagen: p } : null; }
+  if (panelFirma === 'pImg') return imgSubida ? { tipo: 'imagen', imagen: imgSubida } : null;
+  const n = $('#sNombre').value.trim().toUpperCase();
+  return n ? { tipo: 'sello', nombre: n, cargo: $('#sCargo').value.trim().toUpperCase() } : null;
+}
+function previewFirma() {
+  const p = $('#fPrev'), f = firmaDelPanel(); p.innerHTML = '';
+  if (!f) { p.innerHTML = '<span style="color:#999;font-size:13px">Vista previa</span>'; return; }
+  if (f.tipo === 'imagen') { const im = document.createElement('img'); im.src = f.imagen; p.appendChild(im); }
+  else p.appendChild(htmlSello(f, 'Fecha: ' + new Date().toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' })));
+}
+document.querySelectorAll('#vFirma .tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#vFirma .tabs button').forEach(x => x.classList.toggle('act', x === b));
+  document.querySelectorAll('#vFirma .panel').forEach(p => p.classList.toggle('act', p.id === b.dataset.p));
+  panelFirma = b.dataset.p;
+  if (panelFirma === 'pDib') prepararPad();
+  previewFirma();
+});
+function abrirConfFirma() {
+  $('#vFirma').classList.add('ver');
+  requestAnimationFrame(() => { prepararPad(); if (firmaCfg?.tipo === 'sello') { $('#sNombre').value = firmaCfg.nombre; $('#sCargo').value = firmaCfg.cargo; } previewFirma(); });
+}
+$('#bGuardarFirma').onclick = async () => {
+  const f = firmaDelPanel();
+  if (!f) { toast('Falta la firma', panelFirma === 'pSel' ? 'Escribe el nombre.' : 'Dibuja o sube la firma.', 'err'); return; }
+  try {
+    await api('firma', { method: 'PUT', body: JSON.stringify(f) });
+    firmaCfg = f; pintarFirma(); cerrarModales();
+    toast('Firma guardada', 'Ya puedes usar ✍️ Firmar en cualquier reporte.');
+  } catch (e) { toast('No se pudo guardar la firma', e.message, 'err'); }
+};
+
+// ================= reportes y clientes =================
 let pestaña = 'rep', datosLista = [];
 async function abrirHistorial() {
   $('#vHist').classList.add('ver');
   $('#buscar').value = '';
   await cargarLista();
-  $('#buscar').focus();
 }
 async function cargarLista() {
+  $('#buscar').placeholder = pestaña === 'rep' ? 'Buscar por número, cliente o descripción…' : 'Buscar cliente, dirección, teléfono o equipo…';
   $('#lista').innerHTML = '<div class="vacio">Cargando…</div>';
   try {
     if (pestaña === 'rep') datosLista = await api('reportes');
@@ -503,57 +914,94 @@ async function cargarLista() {
     pintarLista();
   } catch (e) { $('#lista').innerHTML = '<div class="vacio">No se pudo cargar.</div>'; }
 }
+function linea(cont, txt) { if (!txt) return; const s = document.createElement('span'); s.textContent = txt; cont.appendChild(s); }
 function pintarLista() {
   const q = $('#buscar').value.trim().toUpperCase();
   const cont = $('#lista'); cont.innerHTML = '';
   const filtrados = datosLista.filter(x => JSON.stringify(x).toUpperCase().includes(q));
-  if (!filtrados.length) { cont.innerHTML = `<div class="vacio">${pestaña === 'rep' ? 'Aún no hay reportes guardados.' : 'Aún no hay clientes guardados.'}</div>`; return; }
+  if (!filtrados.length) { cont.innerHTML = `<div class="vacio">${q ? 'Sin resultados.' : pestaña === 'rep' ? 'Aún no hay reportes guardados.' : 'Aún no hay clientes. Se registran solos al guardar un reporte.'}</div>`; return; }
   filtrados.forEach(x => {
     const it = document.createElement('div'); it.className = 'item';
+    const av = document.createElement('div'); av.className = 'av';
     const info = document.createElement('div'); info.className = 'info';
     const t = document.createElement('div'); t.className = 't';
     const s = document.createElement('div'); s.className = 's';
-    const del = document.createElement('button'); del.textContent = 'Eliminar';
+    const acc = document.createElement('div'); acc.className = 'acc';
+    const usar = document.createElement('button');
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = 'Eliminar';
     if (pestaña === 'rep') {
-      t.textContent = `Nº ${x.numero} — ${x.cliente || 'Sin cliente'}`;
-      s.textContent = [x.fecha, x.descripcion].filter(Boolean).join(' · ') || ' ';
-      info.onclick = () => abrir(x.numero);
+      av.classList.add('rep'); av.textContent = x.numero.slice(-4);
+      t.textContent = x.cliente || 'Sin cliente';
+      linea(s, 'Nº ' + x.numero); linea(s, x.fecha); linea(s, x.descripcion);
+      usar.textContent = 'Abrir';
+      info.onclick = usar.onclick = () => abrir(x.numero);
       del.onclick = async () => {
         if (!confirm(`¿Eliminar el reporte ${x.numero}? Esto no se puede deshacer.`)) return;
         await api('reportes/' + encodeURIComponent(x.numero), { method: 'DELETE' });
         if (cargado === x.numero) { cargado = null; marcar(true); }
-        toast('Reporte eliminado'); cargarLista();
+        toast('Reporte eliminado', 'Nº ' + x.numero, 'info'); cargarLista();
       };
     } else {
+      av.textContent = iniciales(x.cliente);
       t.textContent = x.cliente;
-      s.textContent = [x.direccion, x.telefono, x.equipo, x.modelo].filter(Boolean).join(' · ') || ' ';
-      info.onclick = () => { campo('cliente').value = x.cliente; autocompletarCliente(); cerrarModales(); };
+      linea(s, x.direccion && '📍 ' + x.direccion); linea(s, x.telefono && '📞 ' + x.telefono);
+      linea(s, [x.equipo, x.marca, x.modelo].filter(Boolean).join(' ') && '⚙️ ' + [x.equipo, x.marca, x.modelo].filter(Boolean).join(' '));
+      usar.textContent = 'Usar en reporte';
+      info.onclick = usar.onclick = () => { campo('cliente').value = x.cliente; autocompletarCliente(); cerrarModales(); };
       del.onclick = async () => {
-        if (!confirm(`¿Eliminar al cliente ${x.cliente} de la lista? Sus reportes no se borran.`)) return;
+        if (!confirm(`¿Quitar a ${x.cliente} de la lista de clientes? Sus reportes no se borran.`)) return;
         await api('clientes/' + encodeURIComponent(x.cliente), { method: 'DELETE' });
-        toast('Cliente eliminado'); cargarLista();
+        toast('Cliente quitado', x.cliente, 'info'); cargarLista();
       };
     }
-    info.append(t, s); it.append(info, del); cont.appendChild(it);
+    info.append(t, s); acc.append(usar, del); it.append(av, info, acc); cont.appendChild(it);
   });
 }
-function cerrarModales() { $('#vHist').classList.remove('ver'); }
+function cerrarModales() { $('#vHist').classList.remove('ver'); $('#vFirma').classList.remove('ver'); }
 
-// ---------- edición de títulos ----------
+// ================= títulos (globales) =================
+async function guardarFormato(arr, msg) {
+  try { await api('formato', { method: 'PUT', body: JSON.stringify({ etiquetas: arr }) }); formato = arr; if (msg) toast(msg, 'Se aplica a todos los reportes.'); }
+  catch (e) { toast('No se pudo guardar el formato', e.message, 'err'); }
+}
 function modoEdicion(on) {
+  const estaba = document.body.classList.contains('editando');
+  if (on) vista('hoja');
   document.body.classList.toggle('editando', on);
   etiquetasEl.forEach(e => e.contentEditable = on ? 'true' : 'false');
   $('#bEditar').classList.toggle('on', on);
   $('#bEditar').textContent = on ? '✔ Terminar edición' : '✏️ Editar títulos';
+  if (estaba && !on && JSON.stringify(leerEtiquetas()) !== JSON.stringify(formato || ORIGINAL)) guardarFormato(leerEtiquetas(), 'Títulos guardados');
 }
 
-// ---------- eventos ----------
+// ================= vista (celular) =================
+const mq = matchMedia('(max-width: 820px)');
+function vista(v) {
+  document.body.classList.toggle('vista-form', v === 'form');
+  $('#vForm').classList.toggle('act', v === 'form');
+  $('#vHoja').classList.toggle('act', v === 'hoja');
+  escalar();
+}
+$('#vForm').onclick = () => { modoEdicion(false); vista('form'); window.scrollTo(0, 0); };
+$('#vHoja').onclick = () => { vista('hoja'); window.scrollTo(0, 0); };
+
+function escalar() {
+  const p = $('#page');
+  p.style.zoom = '';
+  const w = document.documentElement.clientWidth - 16, full = p.offsetWidth || 794;
+  p.style.zoom = w < full ? (w / full) : '';
+}
+window.addEventListener('resize', escalar);
+window.addEventListener('beforeprint', () => { $('#page').style.zoom = ''; });
+window.addEventListener('afterprint', escalar);
+
+// ================= eventos =================
 inputs.forEach((el, i) => {
-  el.addEventListener('input', () => marcar(true));
+  el.addEventListener('input', () => { pintarLleno(el); marcar(true); });
+  el.addEventListener('change', () => syncMovil());
   el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); (inputs[i + 1] || el).focus(); } });
 });
 etiquetasEl.forEach(e => {
-  e.addEventListener('input', () => marcar(true));
   e.addEventListener('paste', ev => { ev.preventDefault(); document.execCommand('insertText', false, ev.clipboardData.getData('text/plain')); });
 });
 campo('cliente').addEventListener('change', autocompletarCliente);
@@ -561,44 +1009,38 @@ campo('cliente').addEventListener('input', e => { if (e.inputType === 'insertRep
 
 $('#bNuevo').onclick = () => nuevo();
 $('#bGuardar').onclick = guardar;
+$('#bFirmar').onclick = alternarFirma;
+$('#bConfFirma').onclick = abrirConfFirma;
 $('#bImprimir').onclick = () => { modoEdicion(false); window.print(); };
 $('#bHistorial').onclick = abrirHistorial;
 $('#bEditar').onclick = () => modoEdicion(!document.body.classList.contains('editando'));
-$('#bPredet').onclick = async () => {
-  try { formatoPredet = leerEtiquetas(); await api('formato', { method: 'PUT', body: JSON.stringify({ etiquetas: formatoPredet }) }); toast('Formato guardado para reportes nuevos'); }
-  catch (e) { toast('No se pudo guardar el formato', true); }
-};
-$('#bOriginal').onclick = () => { ponerEtiquetas(ORIGINAL); marcar(true); toast('Formato original restaurado (presiona Guardar)'); };
+$('#bOriginal').onclick = () => { ponerEtiquetas(ORIGINAL); guardarFormato(ORIGINAL, 'Formato original restaurado'); };
 $('#tRep').onclick = () => { pestaña = 'rep'; $('#tRep').classList.add('act'); $('#tCli').classList.remove('act'); cargarLista(); };
 $('#tCli').onclick = () => { pestaña = 'cli'; $('#tCli').classList.add('act'); $('#tRep').classList.remove('act'); cargarLista(); };
 $('#buscar').oninput = pintarLista;
 document.querySelectorAll('[data-cerrar]').forEach(b => b.onclick = cerrarModales);
-$('#vHist').onclick = (e) => { if (e.target.id === 'vHist') cerrarModales(); };
+['#vHist', '#vFirma'].forEach(s => $(s).addEventListener('click', e => { if (e.target === $(s)) cerrarModales(); }));
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); }
   if (e.key === 'Escape') cerrarModales();
 });
 window.addEventListener('beforeunload', e => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
 
-// ajustar la hoja a pantallas angostas
-function escalar() {
-  const p = $('#page'), w = window.innerWidth - 16, full = p.offsetWidth;
-  p.style.zoom = w < full ? (w / full) : '';
-}
-window.addEventListener('resize', escalar); escalar();
-window.addEventListener('beforeprint', () => { $('#page').style.zoom = ''; });
-window.addEventListener('afterprint', escalar);
+// ================= inicio =================
+vista(mq.matches ? 'form' : 'hoja');
+mq.addEventListener('change', () => vista(mq.matches ? 'form' : 'hoja'));
 
-// ---------- inicio ----------
 async function iniciar() {
   try { await api('ping'); } catch (e) { return; }
-  try { formatoPredet = (await api('formato')).etiquetas; } catch (e) {}
-  cargarClientes();
+  const [f, fi] = await Promise.all([api('formato').catch(() => ({})), api('firma').catch(() => null)]);
+  formato = f.etiquetas || null; ponerEtiquetas(formato);
+  firmaCfg = fi && fi.tipo ? fi : null;
+  await cargarClientes();
   let b = null;
   try { b = JSON.parse(localStorage.getItem('cirelec-borrador') || 'null'); } catch (e) {}
   if (b && b.campos) {
-    ponerCampos(b.campos); ponerEtiquetas(b.etiquetas); cargado = b.cargado; marcar(true);
-    toast('Se recuperó un borrador sin guardar');
+    ponerCampos(b.campos); cargado = b.cargado; marcar(true);
+    toast('Borrador recuperado', 'Tenías cambios sin guardar.', 'info');
   } else {
     await nuevo(false);
   }

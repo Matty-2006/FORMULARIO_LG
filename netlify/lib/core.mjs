@@ -46,7 +46,7 @@ export async function handle(req, store, appKey) {
       const campos = body.campos || {};
       const ahora = new Date().toISOString();
       const previo = await store.get(`reporte/${id}`);
-      const reporte = { numero: id, campos, etiquetas: body.etiquetas || null, creado: previo?.creado || ahora, actualizado: ahora };
+      const reporte = { numero: id, campos, creado: previo?.creado || ahora, actualizado: ahora };
       await store.set(`reporte/${id}`, reporte);
 
       const indice = (await store.get('indice')) || {};
@@ -54,15 +54,20 @@ export async function handle(req, store, appKey) {
       indice[id] = { cliente: campos.cliente || '', fecha, descripcion: campos.desc1 || '', actualizado: ahora };
       await store.set('indice', indice);
 
+      // los títulos editados valen para todos los reportes
+      if (Array.isArray(body.etiquetas)) await store.set('formato', { etiquetas: body.etiquetas });
+
+      let clienteNuevo = false;
       const k = clave(campos.cliente);
       if (k) {
         const clientes = (await store.get('clientes')) || {};
+        clienteNuevo = !clientes[k];
         const datos = {};
         for (const c of CAMPOS_CLIENTE) datos[c] = campos[c] || '';
         clientes[k] = { ...datos, actualizado: ahora };
         await store.set('clientes', clientes);
       }
-      return json(reporte);
+      return json({ ...reporte, clienteNuevo });
     }
 
     if (m === 'DELETE') {
@@ -90,6 +95,16 @@ export async function handle(req, store, appKey) {
     delete clientes[clave(id)];
     await store.set('clientes', clientes);
     return json({ ok: true });
+  }
+
+  if (recurso === 'firma') {
+    if (m === 'GET') return json((await store.get('firma')) || null);
+    if (m === 'PUT') {
+      const body = await req.json();
+      if (body?.imagen && body.imagen.length > 1_500_000) return json({ error: 'La imagen de la firma es muy pesada' }, 413);
+      await store.set('firma', body);
+      return json({ ok: true });
+    }
   }
 
   if (recurso === 'formato') {
