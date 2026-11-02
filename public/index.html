@@ -232,6 +232,10 @@
     .page { margin: 10px 8px; }
     .velo { padding: 0; align-items: flex-end; }
     .modal { max-height: 92vh; border-radius: 16px 16px 0 0; }
+    /* espacio libre abajo para que la etiqueta "Powered by Netlify" no tape los botones */
+    .fbody, .lista { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+    .facc button { flex: 1; padding: 12px 16px; }
+    .page { margin-bottom: 96px; }
     .item { flex-wrap: wrap; }
     .item .acc { width: 100%; justify-content: flex-end; }
   }
