@@ -8,6 +8,7 @@
 <title>Reportes CIRELEC</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js"></script>
 <style>
   @page { size: A4; margin: 0; }
   :root { --t: #2f3a86; --rojo: #8e2b35; --dato: #10152b; --barra: #1f2a63; --foco: #3d56c9; --ok: #1f8a4c; }
@@ -179,7 +180,7 @@
   .vacio { padding: 28px; text-align: center; color: #777; font-size: 14px; }
   .x { font: inherit; font-size: 22px; border: 0; background: none; cursor: pointer; color: #555; line-height: 1; padding: 0 4px; }
 
-  .fbody { padding: 14px 16px 16px; overflow: auto; }
+  .fbody { padding: 14px 16px 16px; overflow-y: auto; overflow-x: hidden; }
   .fbody p { margin: 0 0 10px; font-size: 13.5px; color: #555; }
   .pad { width: 100%; height: 190px; border: 1.5px dashed #b9c1e2; border-radius: 10px; background: #fbfcff; touch-action: none; display: block; }
   .fbody .fld input { text-transform: none; }
@@ -189,7 +190,13 @@
   .facc { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
   .facc button { font: inherit; font-size: 14px; padding: 9px 16px; border-radius: 8px; cursor: pointer; border: 1px solid #cfd5ea; background: #fff; color: var(--barra); }
   .facc button.pri { background: var(--barra); color: #fff; border-color: var(--barra); font-weight: bold; }
-  .panel { display: none; } .panel.act { display: block; }
+  .chk { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #444; margin: 4px 0 6px; cursor: pointer; }
+  .chk input { margin-top: 2px; }
+  .ferr { color: #b3261e; font-size: 13px; min-height: 18px; margin: 6px 0 0; }
+  .certok { display: flex; align-items: center; gap: 10px; background: #eef2ff; border: 1px solid #d5dcf7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 13.5px; color: #1b2149; }
+  .certok b { word-break: break-all; }
+  .certok button { margin-left: auto; font: inherit; font-size: 12.5px; padding: 5px 10px; border-radius: 7px; border: 1px solid #cfd5ea; background: #fff; color: var(--barra); cursor: pointer; }
+  .seguro { display: flex; gap: 8px; background: #e9f7ef; border: 1px solid #bfe6cf; color: #17643a; border-radius: 10px; padding: 9px 11px; font-size: 12.5px; margin-bottom: 12px; }
 
   .login { background: #fff; color: #222; width: min(420px, 100%); border-radius: 12px; padding: 24px; text-align: center; }
   .login img { width: 200px; }
@@ -249,7 +256,6 @@
     <button class="btn" id="bImprimir">🖨 Imprimir / PDF</button>
     <button class="btn" id="bHistorial">📂 Reportes y clientes</button>
     <button class="btn" id="bEditar">✏️ Editar títulos</button>
-    <button class="btn" id="bConfFirma" title="Configurar firma">⚙️ Firma</button>
     <span class="estado" id="estado"></span>
   </div>
   <div class="seg">
@@ -410,35 +416,23 @@
   </div>
 </div>
 
-<!-- Configurar firma -->
+<!-- Firmar con certificado -->
 <div class="velo" id="vFirma">
-  <div class="modal" style="width:min(560px,100%)">
+  <div class="modal" style="width:min(480px,100%)">
     <header>
-      <h2>Firma del Gerente Técnico</h2>
+      <h2>🔐 Firmar como Gerente Técnico</h2>
       <button class="x" data-cerrar>×</button>
     </header>
     <div class="fbody">
-      <p>Esta firma aparece sobre la línea de <b>Gerente Técnico</b> cuando presionas <b>✍️ Firmar</b>. Se configura una sola vez.</p>
-      <div class="tabs" style="margin-bottom:12px">
-        <button data-p="pDib" class="act">Dibujar</button><button data-p="pImg">Subir imagen</button><button data-p="pSel">Sello electrónico</button>
-      </div>
-      <div class="panel act" id="pDib">
-        <canvas class="pad" id="pad"></canvas>
-        <div class="facc" style="justify-content:flex-start;margin-top:8px"><button id="padLimpiar">Borrar trazo</button></div>
-      </div>
-      <div class="panel" id="pImg">
-        <p>Sube una foto o escaneo de la firma (mejor con fondo blanco).</p>
-        <input type="file" id="fImg" accept="image/*">
-      </div>
-      <div class="panel" id="pSel">
-        <p>Genera un sello con código QR, al estilo de la firma electrónica.</p>
-        <div class="fld"><label>Nombre completo</label><input id="sNombre" placeholder="Ej. JUAN PÉREZ LÓPEZ"></div>
-        <div class="fld"><label>Cargo</label><input id="sCargo" value="GERENTE TÉCNICO"></div>
-      </div>
-      <div class="fprev" id="fPrev"><span style="color:#999;font-size:13px">Vista previa</span></div>
+      <div class="seguro">🔒 <span>Tu archivo de firma y tu contraseña se usan <b>solo en este dispositivo</b>. No se envían ni se guardan en internet.</span></div>
+      <div class="certok" id="certOk" style="display:none">📄 <span>Firma guardada en este dispositivo:<br><b id="certNom"></b></span><button id="certCambiar">Cambiar</button></div>
+      <div class="fld" id="certFile"><label>Archivo de firma electrónica (.p12 / .pfx)</label><input type="file" id="fP12" accept=".p12,.pfx,application/x-pkcs12"></div>
+      <div class="fld"><label>Contraseña de la firma</label><input type="password" id="pP12" autocomplete="off" placeholder="La misma que usas en FirmaEC"></div>
+      <label class="chk" id="recWrap"><input type="checkbox" id="recP12" checked> Recordar el archivo en este dispositivo (la contraseña nunca se guarda)</label>
+      <p class="ferr" id="fErr"></p>
       <div class="facc">
         <button data-cerrar>Cancelar</button>
-        <button class="pri" id="bGuardarFirma">Guardar firma</button>
+        <button class="pri" id="bFirmarCert">✍️ Firmar</button>
       </div>
     </div>
   </div>
@@ -561,7 +555,7 @@ function crearCampo(f, etiqueta, padre) {
   const i = document.createElement('input');
   i.autocomplete = 'off';
   if (f === 'cliente') i.setAttribute('list', 'dlClientes');
-  i.addEventListener('input', () => { campo(f).value = i.value; pintarLleno(campo(f)); marcar(true); if (f === 'cliente') revisarCliente(i.value, true); });
+  i.addEventListener('input', () => { campo(f).value = i.value; pintarLleno(campo(f)); tocar(); marcar(true); if (f === 'cliente') revisarCliente(i.value, true); });
   i.addEventListener('change', () => { if (f === 'cliente') autocompletarCliente(); });
   d.append(l, i); padre.appendChild(d); mIn[f] = i;
 }
@@ -573,7 +567,7 @@ function filaMat(n, cont) {
   const b = document.createElement('input'); b.placeholder = 'Cant.';
   [[a, 'm' + n], [b, `m${n}_c`]].forEach(([el, f]) => {
     mIn[f] = el;
-    el.addEventListener('input', () => { campo(f).value = el.value; pintarLleno(campo(f)); marcar(true); ajustarMat(); });
+    el.addEventListener('input', () => { campo(f).value = el.value; pintarLleno(campo(f)); tocar(); marcar(true); ajustarMat(); });
   });
   r.append(num, a, b); cont.appendChild(r);
 }
@@ -602,7 +596,7 @@ SECCIONES.forEach(([titulo, bloques]) => {
         const r = repartir(t.value, GRUPOS[g]);
         GRUPOS[g].forEach((f, j) => { campo(f).value = r.lineas[j]; pintarLleno(campo(f)); });
         av.classList.toggle('ver', r.sobra);
-        marcar(true);
+        tocar(); marcar(true);
       });
       d.append(l, t, av); s.appendChild(d); mTxt[g] = t;
       return;
@@ -654,9 +648,7 @@ let cargado = null;
 let sucio = false;
 let formato = null;      // títulos guardados (valen para todos los reportes)
 let clientes = [];
-let firmaCfg = null;     // firma configurada
-let firmado = false;
-let firmadoFecha = '';
+let firma = null;        // firma electrónica del reporte abierto
 
 function textoEstado() { return sucio ? '● Cambios sin guardar' : (cargado ? `✓ Reporte ${cargado} guardado` : ''); }
 function marcar(s) {
@@ -668,13 +660,13 @@ const pintarLleno = (el) => el.classList.toggle('lleno', !!el.value);
 
 function leerCampos() {
   const d = {}; inputs.forEach(i => d[i.dataset.f] = i.value.trim().toUpperCase());
-  d.firmado = firmado ? '1' : ''; d.firmado_fecha = firmado ? firmadoFecha : '';
+  if (firma) Object.assign(d, firma, { firmado: '1' });
   return d;
 }
 function ponerCampos(d) {
   d = d || {};
   inputs.forEach(i => { i.value = d[i.dataset.f] || ''; pintarLleno(i); });
-  firmado = d.firmado === '1'; firmadoFecha = d.firmado_fecha || '';
+  firma = d.firmado === '1' && d.firma_sig ? Object.fromEntries(Object.entries(d).filter(([k]) => k.startsWith('firma_'))) : null;
   pintarFirma();
   syncMovil();
 }
@@ -765,138 +757,159 @@ function autocompletarCliente() {
   if (!c) return;
   CAMPOS_CLIENTE.forEach(f => { const el = campo(f); if (el) { el.value = c[f] || ''; pintarLleno(el); } });
   syncMovil();
-  marcar(true);
+  tocar(); marcar(true);
   const det = [c.direccion, c.telefono].filter(Boolean).join(' · ');
   toast('Cliente encontrado', `Se cargaron los datos de ${c.cliente}${det ? ' (' + det + ')' : ''}.`, 'info');
 }
 
-// ================= firma =================
-function htmlSello(cfg, extra) {
-  const txt = `FIRMADO POR: ${cfg.nombre}\nCARGO: ${cfg.cargo || ''}\n${extra || ''}`.trim();
+// ================= firma electrónica (.p12) =================
+// El certificado se abre en el navegador con node-forge; nada sale del dispositivo.
+// En el reporte solo se guarda la firma digital y el certificado público.
+const P12_LS = 'cirelec-p12', P12_NOM = 'cirelec-p12-nombre';
+const fechaCorta = (d) => d.toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' });
+
+// contenido que se firma: todos los campos del reporte, en orden fijo
+function datosParaFirmar() {
+  const d = {}; inputs.forEach(i => d[i.dataset.f] = i.value.trim().toUpperCase());
+  return JSON.stringify(d);
+}
+
+function htmlSello(nombre, qrTexto, extra) {
   let src = '';
-  try { const q = qrcode(0, 'M'); q.addData(unescape(encodeURIComponent(txt))); q.make(); src = q.createDataURL(4, 0); } catch (e) {}
+  try { const q = qrcode(0, 'M'); q.addData(unescape(encodeURIComponent(qrTexto))); q.make(); src = q.createDataURL(4, 0); } catch (e) {}
   const d = document.createElement('div'); d.className = 'sello';
   if (src) { const im = document.createElement('img'); im.src = src; im.alt = 'QR'; d.appendChild(im); }
   const t = document.createElement('div'); t.className = 'tx';
   t.append('Firmado electrónicamente por:');
-  const b = document.createElement('b'); b.textContent = cfg.nombre; t.appendChild(b);
+  const b = document.createElement('b'); b.textContent = nombre; t.appendChild(b);
   if (extra) { const i = document.createElement('i'); i.textContent = extra; t.appendChild(i); }
   d.appendChild(t);
   return d;
 }
+
 function pintarFirma() {
   const cont = $('#firmaGer'); cont.innerHTML = '';
   const bt = $('#bFirmar');
-  bt.classList.toggle('firmado', firmado);
-  bt.textContent = firmado ? '✔ Firmado' : '✍️ Firmar';
-  if (!firmado || !firmaCfg) return;
-  if (firmaCfg.tipo === 'imagen') {
-    const im = document.createElement('img'); im.className = 'trazo'; im.src = firmaCfg.imagen; im.alt = 'Firma'; cont.appendChild(im);
-  } else if (firmaCfg.tipo === 'sello') {
-    cont.appendChild(htmlSello(firmaCfg, firmadoFecha ? 'Fecha: ' + firmadoFecha : ''));
-  }
-}
-function alternarFirma() {
-  if (!firmaCfg) { toast('Primero configura la firma', 'Dibuja, sube o genera tu firma una sola vez.', 'info'); abrirConfFirma(); return; }
-  firmado = !firmado;
-  firmadoFecha = firmado ? new Date().toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' }) : '';
-  pintarFirma();
-  marcar(true);
-  toast(firmado ? 'Reporte firmado' : 'Firma quitada', firmado ? 'La firma aparece en Gerente Técnico. Recuerda Guardar.' : 'Recuerda Guardar.', firmado ? 'ok' : 'info');
+  bt.classList.toggle('firmado', !!firma);
+  bt.textContent = firma ? '✔ Firmado' : '✍️ Firmar';
+  if (!firma) return;
+  const qr = [`FIRMADO POR: ${firma.firma_nombre}`, firma.firma_ci && `CI/RUC: ${firma.firma_ci}`,
+    `RAZON: REPORTE DE TRABAJO Nº ${campo('numero').value}`, `FECHA: ${firma.firma_fecha}`,
+    firma.firma_emisor && `EMITIDO POR: ${firma.firma_emisor}`, `HUELLA: ${firma.firma_hash.slice(0, 32)}`].filter(Boolean).join('\n');
+  cont.appendChild(htmlSello(firma.firma_nombre, qr, 'Fecha: ' + firma.firma_fecha));
 }
 
-// --- configurar firma ---
-let panelFirma = 'pDib', imgSubida = null;
-const pad = $('#pad'), pctx = pad.getContext('2d');
-let dibujando = false, hayTrazo = false;
-function prepararPad() {
-  const r = pad.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
-  pad.width = r.width * dpr; pad.height = r.height * dpr;
-  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  pctx.lineWidth = 2.4; pctx.lineCap = 'round'; pctx.lineJoin = 'round'; pctx.strokeStyle = '#0d1a6b';
-  hayTrazo = false;
+// si se modifica el reporte después de firmar, la firma deja de valer
+function tocar() {
+  if (!firma) return;
+  firma = null; pintarFirma();
+  toast('Se quitó la firma', 'Modificaste el reporte después de firmarlo. Vuelve a firmar.', 'info');
 }
-const pos = (e) => { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-pad.addEventListener('pointerdown', e => { dibujando = true; pad.setPointerCapture(e.pointerId); pctx.beginPath(); pctx.moveTo(...pos(e)); });
-pad.addEventListener('pointermove', e => { if (!dibujando) return; pctx.lineTo(...pos(e)); pctx.stroke(); hayTrazo = true; });
-pad.addEventListener('pointerup', () => { dibujando = false; previewFirma(); });
-$('#padLimpiar').onclick = () => { prepararPad(); previewFirma(); };
 
-// recorta los bordes vacíos de un canvas y devuelve PNG
-function recortar(cv) {
-  const c = cv.getContext('2d'), { width: w, height: h } = cv, px = c.getImageData(0, 0, w, h).data;
-  let x0 = w, y0 = h, x1 = 0, y1 = 0;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const k = (y * w + x) * 4;
-    if (px[k + 3] > 10 && (px[k] < 200 || px[k + 1] < 200 || px[k + 2] < 200)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-  }
-  if (x1 <= x0 || y1 <= y0) return null;
-  const m = 6, o = document.createElement('canvas');
-  o.width = x1 - x0 + m * 2; o.height = y1 - y0 + m * 2;
-  o.getContext('2d').drawImage(cv, x0 - m, y0 - m, o.width, o.height, 0, 0, o.width, o.height);
-  return o.toDataURL('image/png');
+function quitarFirma() {
+  firma = null; pintarFirma(); marcar(true);
+  toast('Firma quitada', 'Presiona Guardar para que quede así.', 'info');
 }
-// imagen subida: escala, quita el fondo claro y recorta
-function procesarImagen(file) {
-  return new Promise((res, rej) => {
-    const fr = new FileReader();
-    fr.onload = () => {
-      const im = new Image();
-      im.onload = () => {
-        const esc = Math.min(1, 900 / im.width), cv = document.createElement('canvas');
-        cv.width = im.width * esc; cv.height = im.height * esc;
-        const c = cv.getContext('2d'); c.drawImage(im, 0, 0, cv.width, cv.height);
-        const d = c.getImageData(0, 0, cv.width, cv.height);
-        for (let k = 0; k < d.data.length; k += 4) {
-          const l = (d.data[k] + d.data[k + 1] + d.data[k + 2]) / 3;
-          if (l > 185) d.data[k + 3] = 0;
-        }
-        c.putImageData(d, 0, 0);
-        res(recortar(cv));
-      };
-      im.onerror = rej; im.src = fr.result;
-    };
-    fr.onerror = rej; fr.readAsDataURL(file);
-  });
-}
-$('#fImg').onchange = async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  try { imgSubida = await procesarImagen(f); previewFirma(); } catch (er) { toast('No se pudo leer la imagen', '', 'err'); }
-};
-['#sNombre', '#sCargo'].forEach(s => $(s).addEventListener('input', previewFirma));
 
-function firmaDelPanel() {
-  if (panelFirma === 'pDib') { const p = hayTrazo && recortar(pad); return p ? { tipo: 'imagen', imagen: p } : null; }
-  if (panelFirma === 'pImg') return imgSubida ? { tipo: 'imagen', imagen: imgSubida } : null;
-  const n = $('#sNombre').value.trim().toUpperCase();
-  return n ? { tipo: 'sello', nombre: n, cargo: $('#sCargo').value.trim().toUpperCase() } : null;
-}
-function previewFirma() {
-  const p = $('#fPrev'), f = firmaDelPanel(); p.innerHTML = '';
-  if (!f) { p.innerHTML = '<span style="color:#999;font-size:13px">Vista previa</span>'; return; }
-  if (f.tipo === 'imagen') { const im = document.createElement('img'); im.src = f.imagen; p.appendChild(im); }
-  else p.appendChild(htmlSello(f, 'Fecha: ' + new Date().toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' })));
-}
-document.querySelectorAll('#vFirma .tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('#vFirma .tabs button').forEach(x => x.classList.toggle('act', x === b));
-  document.querySelectorAll('#vFirma .panel').forEach(p => p.classList.toggle('act', p.id === b.dataset.p));
-  panelFirma = b.dataset.p;
-  if (panelFirma === 'pDib') prepararPad();
-  previewFirma();
-});
-function abrirConfFirma() {
+function abrirFirmar() {
+  let guardado = null;
+  try { guardado = localStorage.getItem(P12_LS) && localStorage.getItem(P12_NOM); } catch (e) {}
+  $('#certOk').style.display = guardado ? 'flex' : 'none';
+  $('#certNom').textContent = guardado || '';
+  $('#certFile').style.display = guardado ? 'none' : '';
+  $('#recWrap').style.display = guardado ? 'none' : '';
+  $('#fP12').value = ''; $('#pP12').value = ''; $('#fErr').textContent = '';
   $('#vFirma').classList.add('ver');
-  requestAnimationFrame(() => { prepararPad(); if (firmaCfg?.tipo === 'sello') { $('#sNombre').value = firmaCfg.nombre; $('#sCargo').value = firmaCfg.cargo; } previewFirma(); });
+  setTimeout(() => (guardado ? $('#pP12') : $('#fP12')).focus(), 50);
 }
-$('#bGuardarFirma').onclick = async () => {
-  const f = firmaDelPanel();
-  if (!f) { toast('Falta la firma', panelFirma === 'pSel' ? 'Escribe el nombre.' : 'Dibuja o sube la firma.', 'err'); return; }
-  try {
-    await api('firma', { method: 'PUT', body: JSON.stringify(f) });
-    firmaCfg = f; pintarFirma(); cerrarModales();
-    toast('Firma guardada', 'Ya puedes usar ✍️ Firmar en cualquier reporte.');
-  } catch (e) { toast('No se pudo guardar la firma', e.message, 'err'); }
+$('#certCambiar').onclick = () => {
+  try { localStorage.removeItem(P12_LS); localStorage.removeItem(P12_NOM); } catch (e) {}
+  abrirFirmar();
 };
+
+const leerBinario = (file) => new Promise((res, rej) => {
+  const fr = new FileReader();
+  fr.onload = () => res(forge.util.binary.raw.encode(new Uint8Array(fr.result)));
+  fr.onerror = rej; fr.readAsArrayBuffer(file);
+});
+
+function abrirP12(bin, pass) {
+  let p12;
+  try { p12 = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(bin), false, pass); }
+  catch (e) {
+    if (/MAC|password|Invalid/i.test(e.message)) throw new Error('Contraseña incorrecta.');
+    throw new Error('No se pudo leer el archivo. ¿Es un .p12 o .pfx de firma electrónica?');
+  }
+  const bolsas = (tipo) => p12.getBags({ bagType: tipo })[tipo] || [];
+  const llaves = [...bolsas(forge.pki.oids.pkcs8ShroudedKeyBag), ...bolsas(forge.pki.oids.keyBag)].map(b => b.key).filter(Boolean);
+  const certs = bolsas(forge.pki.oids.certBag).map(b => b.cert).filter(Boolean);
+  if (!llaves.length || !certs.length) throw new Error('El archivo no tiene una firma utilizable (falta la clave o el certificado).');
+  for (const key of llaves) {
+    const cert = certs.find(c => c.publicKey.n && key.n && c.publicKey.n.equals(key.n));
+    if (cert) return { key, cert };
+  }
+  return { key: llaves[0], cert: certs[0] };
+}
+
+const attr = (entidad, ...nombres) => {
+  for (const n of nombres) { const a = entidad.getField(n) || entidad.attributes.find(x => x.name === n || x.type === n); if (a) return String(a.value).trim(); }
+  return '';
+};
+
+async function firmarConCertificado() {
+  const err = $('#fErr'); err.textContent = '';
+  const pass = $('#pP12').value;
+  const file = $('#fP12').files[0];
+  let bin = null;
+  try { bin = file ? await leerBinario(file) : (localStorage.getItem(P12_LS) && forge.util.decode64(localStorage.getItem(P12_LS))); } catch (e) {}
+  if (!bin) { err.textContent = 'Selecciona tu archivo de firma (.p12 o .pfx).'; return; }
+  if (!pass) { err.textContent = 'Escribe la contraseña de tu firma.'; $('#pP12').focus(); return; }
+
+  const b = $('#bFirmarCert'); b.disabled = true; b.textContent = 'Firmando…';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const { key, cert } = abrirP12(bin, pass);
+    const ahora = new Date();
+    if (ahora > cert.validity.notAfter) throw new Error(`Tu firma electrónica venció el ${cert.validity.notAfter.toLocaleDateString('es-EC')}. Renuévala con tu proveedor.`);
+    if (ahora < cert.validity.notBefore) throw new Error('Tu firma electrónica todavía no está vigente.');
+    if (!key.sign) throw new Error('Este tipo de firma no es compatible.');
+
+    const contenido = datosParaFirmar();
+    const md = forge.md.sha256.create(); md.update(contenido, 'utf8');
+    const hash = md.digest().toHex();
+    const md2 = forge.md.sha256.create(); md2.update(contenido, 'utf8');
+    const sig = forge.util.encode64(key.sign(md2));
+
+    firma = {
+      firma_nombre: (attr(cert.subject, 'CN', 'commonName') || 'FIRMANTE').toUpperCase(),
+      firma_ci: attr(cert.subject, 'serialNumber', '2.5.4.5'),
+      firma_emisor: attr(cert.issuer, 'O', 'CN'),
+      firma_serie: cert.serialNumber,
+      firma_vence: cert.validity.notAfter.toISOString(),
+      firma_fecha: fechaCorta(ahora),
+      firma_hash: hash,
+      firma_sig: sig,
+      firma_cert: forge.pki.certificateToPem(cert),
+    };
+
+    if (file && $('#recP12').checked) {
+      try { localStorage.setItem(P12_LS, forge.util.encode64(bin)); localStorage.setItem(P12_NOM, file.name); } catch (e) {}
+    }
+    $('#pP12').value = '';
+    cerrarModales();
+    pintarFirma();
+    marcar(true);
+    await guardar();
+    toast('Reporte firmado', `Firmado por ${firma.firma_nombre}.`);
+  } catch (e) {
+    err.textContent = e.message;
+  } finally {
+    $('#pP12').value = '';
+    b.disabled = false; b.textContent = '✍️ Firmar';
+  }
+}
+$('#bFirmarCert').onclick = firmarConCertificado;
+$('#pP12').addEventListener('keydown', e => { if (e.key === 'Enter') firmarConCertificado(); });
 
 // ================= reportes y clientes =================
 let pestaña = 'rep', datosLista = [];
@@ -997,7 +1010,7 @@ window.addEventListener('afterprint', escalar);
 
 // ================= eventos =================
 inputs.forEach((el, i) => {
-  el.addEventListener('input', () => { pintarLleno(el); marcar(true); });
+  el.addEventListener('input', () => { pintarLleno(el); tocar(); marcar(true); });
   el.addEventListener('change', () => syncMovil());
   el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); (inputs[i + 1] || el).focus(); } });
 });
@@ -1009,8 +1022,7 @@ campo('cliente').addEventListener('input', e => { if (e.inputType === 'insertRep
 
 $('#bNuevo').onclick = () => nuevo();
 $('#bGuardar').onclick = guardar;
-$('#bFirmar').onclick = alternarFirma;
-$('#bConfFirma').onclick = abrirConfFirma;
+$('#bFirmar').onclick = () => firma ? quitarFirma() : abrirFirmar();
 $('#bImprimir').onclick = () => { modoEdicion(false); window.print(); };
 $('#bHistorial').onclick = abrirHistorial;
 $('#bEditar').onclick = () => modoEdicion(!document.body.classList.contains('editando'));
@@ -1032,9 +1044,8 @@ mq.addEventListener('change', () => vista(mq.matches ? 'form' : 'hoja'));
 
 async function iniciar() {
   try { await api('ping'); } catch (e) { return; }
-  const [f, fi] = await Promise.all([api('formato').catch(() => ({})), api('firma').catch(() => null)]);
+  const f = await api('formato').catch(() => ({}));
   formato = f.etiquetas || null; ponerEtiquetas(formato);
-  firmaCfg = fi && fi.tipo ? fi : null;
   await cargarClientes();
   let b = null;
   try { b = JSON.parse(localStorage.getItem('cirelec-borrador') || 'null'); } catch (e) {}
