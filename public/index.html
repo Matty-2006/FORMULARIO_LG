@@ -124,13 +124,13 @@
   .foot { left: 12.1mm; top: 283.6mm; width: 184.6mm; text-align: center; font-size: 8.6pt; font-family: "Arial Narrow", Arial, sans-serif; }
 
   /* firma del gerente técnico */
-  .firmaGer { left: 15.5mm; top: 257.6mm; width: 50mm; height: 11.2mm; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+  .firmaGer { left: 12.6mm; top: 254.4mm; width: 54mm; height: 14.4mm; display: flex; align-items: flex-end; justify-content: flex-start; pointer-events: none; }
   .firmaGer img.trazo { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .sello { display: flex; align-items: center; gap: 1.2mm; height: 11mm; color: #000; }
-  .sello img { height: 10.6mm; width: 10.6mm; image-rendering: pixelated; }
-  .sello .tx { font-size: 5pt; line-height: 1.15; text-align: left; max-width: 36mm; }
-  .sello .tx b { display: block; font-size: 6.8pt; line-height: 1.1; margin-top: .3mm; text-transform: uppercase; }
-  .sello .tx i { display: block; font-style: normal; font-size: 4.8pt; margin-top: .4mm; color: #333; }
+  .sello { display: flex; align-items: center; gap: 1.4mm; height: 14.2mm; color: #000; }
+  .sello svg { height: 14.2mm; width: 14.2mm; flex: none; display: block; }
+  .sello .tx { font-size: 5.4pt; line-height: 1.15; text-align: left; max-width: 37mm; }
+  .sello .tx b { display: block; font-size: 7.2pt; line-height: 1.1; margin-top: .3mm; text-transform: uppercase; }
+  .sello .tx i { display: block; font-style: normal; font-size: 5pt; margin-top: .4mm; color: #333; }
 
   /* ---------- formulario para celular ---------- */
   #movil { display: none; padding: 10px 10px 90px; max-width: 640px; margin: 0 auto; }
@@ -257,7 +257,8 @@
     <button class="btn" id="bNuevo">＋ Nuevo</button>
     <button class="btn pri" id="bGuardar">💾 Guardar</button>
     <button class="btn" id="bFirmar" title="Firma del Gerente Técnico">✍️ Firmar</button>
-    <button class="btn" id="bImprimir">🖨 Imprimir / PDF</button>
+    <button class="btn" id="bPdf">📄 Guardar PDF</button>
+    <button class="btn" id="bImprimir">🖨 Imprimir</button>
     <button class="btn" id="bHistorial">📂 Reportes y clientes</button>
     <button class="btn" id="bEditar">✏️ Editar títulos</button>
     <span class="estado" id="estado"></span>
@@ -778,11 +779,23 @@ function datosParaFirmar() {
   return JSON.stringify(d);
 }
 
+// QR vectorial (SVG): sale nítido al imprimir y en el PDF
+function qrSvg(texto) {
+  const q = qrcode(0, 'L'); q.addData(unescape(encodeURIComponent(texto))); q.make();
+  const n = q.getModuleCount(), m = 2, t = n + m * 2;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${t} ${t}`); svg.setAttribute('shape-rendering', 'crispEdges');
+  const fondo = document.createElementNS(ns, 'rect'); fondo.setAttribute('width', t); fondo.setAttribute('height', t); fondo.setAttribute('fill', '#fff');
+  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); p.setAttribute('fill', '#000');
+  svg.append(fondo, p);
+  return svg;
+}
+
 function htmlSello(nombre, qrTexto, extra) {
-  let src = '';
-  try { const q = qrcode(0, 'M'); q.addData(unescape(encodeURIComponent(qrTexto))); q.make(); src = q.createDataURL(4, 0); } catch (e) {}
   const d = document.createElement('div'); d.className = 'sello';
-  if (src) { const im = document.createElement('img'); im.src = src; im.alt = 'QR'; d.appendChild(im); }
+  try { d.appendChild(qrSvg(qrTexto)); } catch (e) {}
   const t = document.createElement('div'); t.className = 'tx';
   t.append('Firmado electrónicamente por:');
   const b = document.createElement('b'); b.textContent = nombre; t.appendChild(b);
@@ -797,9 +810,10 @@ function pintarFirma() {
   bt.classList.toggle('firmado', !!firma);
   bt.textContent = firma ? '✔ Firmado' : '✍️ Firmar';
   if (!firma) return;
-  const qr = [`FIRMADO POR: ${firma.firma_nombre}`, firma.firma_ci && `CI/RUC: ${firma.firma_ci}`,
-    `RAZON: REPORTE DE TRABAJO Nº ${campo('numero').value}`, `FECHA: ${firma.firma_fecha}`,
-    firma.firma_emisor && `EMITIDO POR: ${firma.firma_emisor}`, `HUELLA: ${firma.firma_hash.slice(0, 32)}`].filter(Boolean).join('\n');
+  // texto corto = QR con cuadros más grandes y fácil de escanear
+  const qr = [`FIRMADO POR: ${firma.firma_nombre}`, firma.firma_ci && `CI: ${firma.firma_ci}`,
+    `RAZON: REPORTE DE TRABAJO ${campo('numero').value}`, `FECHA: ${firma.firma_fecha}`,
+    `HUELLA: ${firma.firma_hash.slice(0, 16)}`].filter(Boolean).join('\n');
   cont.appendChild(htmlSello(firma.firma_nombre, qr, 'Fecha: ' + firma.firma_fecha));
 }
 
@@ -1028,6 +1042,69 @@ $('#bNuevo').onclick = () => nuevo();
 $('#bGuardar').onclick = guardar;
 $('#bFirmar').onclick = () => firma ? quitarFirma() : abrirFirmar();
 $('#bImprimir').onclick = () => { modoEdicion(false); window.print(); };
+$('#bPdf').onclick = guardarPDF;
+
+// ================= guardar PDF =================
+// Se toma una "foto" de la hoja en alta resolución (~290 dpi) y se arma un A4.
+const cargarScript = (src) => new Promise((res, rej) => {
+  if (document.querySelector(`script[src="${src}"]`)) return res();
+  const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Revisa tu conexión a internet.'));
+  document.head.appendChild(s);
+});
+
+async function hojaEnCanvas() {
+  await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  const page = $('#page');
+  const eraForm = document.body.classList.contains('vista-form'), scroll = window.scrollY;
+  document.body.classList.remove('vista-form');
+  page.style.zoom = '';
+  window.scrollTo(0, 0);
+  const originales = [...page.querySelectorAll('input')];
+  try {
+    return await html2canvas(page, {
+      scale: 3.4, backgroundColor: '#ffffff', windowWidth: 1280, logging: false, scrollX: 0, scrollY: 0,
+      onclone: (doc) => {
+        const p = doc.getElementById('page');
+        doc.body.className = '';
+        p.style.zoom = ''; p.style.margin = '0'; p.style.boxShadow = 'none';
+        // las casillas se cambian por texto simple, igual que al imprimir
+        [...p.querySelectorAll('input')].forEach((el, k) => {
+          const cs = doc.defaultView.getComputedStyle(el), t = doc.createElement('div');
+          t.textContent = (originales[k] ? originales[k].value : el.value).toUpperCase();
+          Object.assign(t.style, {
+            width: cs.width, height: cs.height, lineHeight: cs.height, fontSize: cs.fontSize, fontFamily: cs.fontFamily,
+            color: cs.color, textAlign: cs.textAlign, paddingLeft: cs.paddingLeft, paddingRight: cs.paddingRight,
+            letterSpacing: cs.letterSpacing, whiteSpace: 'nowrap', overflow: 'hidden', boxSizing: 'border-box', flex: cs.flex,
+          });
+          el.replaceWith(t);
+        });
+      },
+    });
+  } finally {
+    if (eraForm) document.body.classList.add('vista-form');
+    escalar();
+    window.scrollTo(0, scroll);
+  }
+}
+
+async function guardarPDF() {
+  const b = $('#bPdf'); b.disabled = true; b.textContent = 'Generando PDF…';
+  modoEdicion(false);
+  try {
+    await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const canvas = await hojaEnCanvas();
+    const pdf = new jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+    const num = campo('numero').value || 'sin-numero', cli = campo('cliente').value.trim();
+    pdf.setProperties({ title: `Reporte de trabajo ${num}${cli ? ' - ' + cli.toUpperCase() : ''}`, author: 'CIRELEC', creator: 'CIRELEC Reportes' });
+    const nombre = `Reporte-${num}${cli ? '-' + cli : ''}`.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9-]+/g, '-').replace(/-+$/, '');
+    pdf.save(nombre + '.pdf');
+    toast('PDF guardado', `${nombre}.pdf está en tus descargas.`);
+    if (sucio) setTimeout(() => toast('Ojo: el reporte no está guardado', 'El PDF se descargó, pero presiona 💾 Guardar para no perder los cambios.', 'info'), 3400);
+  } catch (e) {
+    toast('No se pudo generar el PDF', e.message, 'err');
+  } finally { b.disabled = false; b.textContent = '📄 Guardar PDF'; }
+}
 $('#bHistorial').onclick = abrirHistorial;
 $('#bEditar').onclick = () => modoEdicion(!document.body.classList.contains('editando'));
 $('#bOriginal').onclick = () => { ponerEtiquetas(ORIGINAL); guardarFormato(ORIGINAL, 'Formato original restaurado'); };
