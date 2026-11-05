@@ -26,6 +26,8 @@
   .btn.pri { background: #fff; color: var(--barra); border-color: #fff; font-weight: bold; }
   .btn.pri:hover { background: #e8ecff; }
   .btn.on { background: #ffd54a; color: #222; border-color: #ffd54a; }
+  .btn.pri.listo { background: #2fb36a; border-color: #2fb36a; color: #fff; }
+  .estado.ok { color: #9ff0be; opacity: 1; font-weight: bold; }
   .btn.firmado { background: #2fb36a; border-color: #2fb36a; color: #fff; font-weight: bold; }
   .btn:disabled { opacity: .6; cursor: default; }
   .estado { margin-left: auto; font-size: 12.5px; opacity: .9; display: inline-flex; align-items: center; gap: 6px; }
@@ -226,7 +228,8 @@
     .seg { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fff; border-bottom: 1px solid #e1e4ef; }
     .seg .tabs { flex: none; }
     .seg .estado { display: inline-flex; color: #5b6385; margin-left: auto; font-size: 12px; text-align: right; }
-    .seg .estado.sucio { color: #a66b00; font-weight: bold; }
+    .seg .estado.sucio { color: #8a5a00; background: #fff4d6; font-weight: bold; padding: 4px 10px; border-radius: 999px; }
+    .seg .estado.ok { color: #17643a; background: #e6f6ed; padding: 4px 10px; border-radius: 999px; }
     body.vista-form #movil { display: block; }
     body.vista-form .page { display: none; }
     .page { margin: 10px 8px; }
@@ -655,11 +658,24 @@ let formato = null;      // títulos guardados (valen para todos los reportes)
 let clientes = [];
 let firma = null;        // firma electrónica del reporte abierto
 
-function textoEstado() { return sucio ? '● Cambios sin guardar' : (cargado ? `✓ Reporte ${cargado} guardado` : ''); }
+let horaGuardado = '';
+const horaCorta = (d) => d.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+function textoEstado() {
+  if (sucio) return '● Sin guardar';
+  return cargado ? `✓ Guardado${horaGuardado ? ' · ' + horaGuardado : ''}` : '';
+}
 function marcar(s) {
   sucio = s;
-  [$('#estado'), $('#estadoM')].forEach(e => { e.textContent = textoEstado(); e.className = 'estado' + (s ? ' sucio' : ''); });
+  [$('#estado'), $('#estadoM')].forEach(e => { e.textContent = textoEstado(); e.className = 'estado' + (s ? ' sucio' : cargado ? ' ok' : ''); });
+  pintarBotonGuardar();
   if (s) guardarBorrador();
+}
+// el botón dice "✓ Guardado" en verde cuando no hay nada pendiente
+function pintarBotonGuardar() {
+  const b = $('#bGuardar'); if (b.disabled) return;
+  const listo = !sucio && !!cargado;
+  b.classList.toggle('listo', listo);
+  b.textContent = listo ? '✓ Guardado' : '💾 Guardar';
 }
 const pintarLleno = (el) => el.classList.toggle('lleno', !!el.value);
 
@@ -691,39 +707,49 @@ async function nuevo(confirmar = true) {
   if (confirmar && sucio && !confirm('Hay cambios sin guardar. ¿Empezar un reporte nuevo de todas formas?')) return;
   const hoy = new Date();
   ponerCampos({ fin_mes: MESES[hoy.getMonth()], fin_dia: String(hoy.getDate()), fin_anio: String(hoy.getFullYear()) });
-  cargado = null;
+  cargado = null; horaGuardado = '';
   try { campo('numero').value = (await api('siguiente')).numero; pintarLleno(campo('numero')); syncMovil(); } catch (e) {}
   marcar(false);
   borrarBorrador();
   window.scrollTo(0, 0);
 }
 
-async function guardar() {
+// devuelve true si el reporte quedó guardado en la app
+async function guardar(opc = {}) {
+  const silencioso = opc.silencioso === true;
   const d = leerCampos();
   const num = d.numero;
-  if (!num) { toast('Falta el número', 'Pon el número del reporte antes de guardar.', 'err'); return; }
-  if (!/^[0-9A-Za-z-]{1,20}$/.test(num)) { toast('Número inválido', 'Solo letras, números y guiones.', 'err'); return; }
+  if (!num) { toast('Falta el número', 'Pon el número del reporte antes de guardar.', 'err'); return false; }
+  if (!/^[0-9A-Za-z-]{1,20}$/.test(num)) { toast('Número inválido', 'Solo letras, números y guiones.', 'err'); return false; }
+  if (!sucio && cargado === num) {
+    if (!silencioso) toast('Ya está guardado', `El reporte ${num} no tiene cambios pendientes${horaGuardado ? ' (guardado a las ' + horaGuardado + ')' : ''}.`);
+    return true;
+  }
   if (num !== cargado) {
     try {
       await api('reportes/' + encodeURIComponent(num));
-      if (!confirm(`Ya existe un reporte con el número ${num}. ¿Reemplazarlo?`)) return;
-    } catch (e) { if (e.message === 'No autorizado') return; }
+      if (!confirm(`Ya existe un reporte con el número ${num}. ¿Reemplazarlo?`)) return false;
+    } catch (e) { if (e.message === 'No autorizado') return false; }
   }
   const b = $('#bGuardar'); b.disabled = true; b.textContent = 'Guardando…';
   try {
     const r = await api('reportes/' + encodeURIComponent(num), { method: 'PUT', body: JSON.stringify({ campos: d, etiquetas: leerEtiquetas() }) });
     formato = leerEtiquetas();
     cargado = num;
+    horaGuardado = horaCorta(new Date());
     marcar(false);
     borrarBorrador();
-    if (r.clienteNuevo) toast('Cliente nuevo registrado', `${d.cliente.toUpperCase()} quedó guardado en tu lista. Reporte ${num} guardado.`);
+    if (silencioso) { if (r.clienteNuevo) setTimeout(() => toast('Cliente nuevo registrado', `${d.cliente.toUpperCase()} quedó guardado en tu lista.`), 3400); }
+    else if (r.clienteNuevo) toast('Cliente nuevo registrado', `${d.cliente.toUpperCase()} quedó guardado en tu lista. Reporte ${num} guardado.`);
     else if (d.cliente) toast(`Reporte ${num} guardado`, `Datos de ${d.cliente.toUpperCase()} actualizados.`);
     else toast(`Reporte ${num} guardado`);
     await cargarClientes();
     revisarCliente(d.cliente, false);
+    return true;
   } catch (e) {
     toast('No se pudo guardar', e.message, 'err');
-  } finally { b.disabled = false; b.textContent = '💾 Guardar'; }
+    return false;
+  } finally { b.disabled = false; pintarBotonGuardar(); }
 }
 
 async function abrir(num) {
@@ -732,6 +758,7 @@ async function abrir(num) {
     const r = await api('reportes/' + encodeURIComponent(num));
     ponerCampos(r.campos);
     cargado = r.numero;
+    horaGuardado = r.actualizado ? horaCorta(new Date(r.actualizado)) : '';
     marcar(false);
     borrarBorrador();
     cerrarModales();
@@ -1088,8 +1115,10 @@ async function hojaEnCanvas() {
 }
 
 async function guardarPDF() {
-  const b = $('#bPdf'); b.disabled = true; b.textContent = 'Generando PDF…';
   modoEdicion(false);
+  // primero se guarda en la app; si no se puede guardar, no se genera el PDF
+  if (!(await guardar({ silencioso: true }))) return;
+  const b = $('#bPdf'); b.disabled = true; b.textContent = 'Generando PDF…';
   try {
     await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     const canvas = await hojaEnCanvas();
@@ -1099,8 +1128,7 @@ async function guardarPDF() {
     pdf.setProperties({ title: `Reporte de trabajo ${num}${cli ? ' - ' + cli.toUpperCase() : ''}`, author: 'CIRELEC', creator: 'CIRELEC Reportes' });
     const nombre = `Reporte-${num}${cli ? '-' + cli : ''}`.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9-]+/g, '-').replace(/-+$/, '');
     pdf.save(nombre + '.pdf');
-    toast('PDF guardado', `${nombre}.pdf está en tus descargas.`);
-    if (sucio) setTimeout(() => toast('Ojo: el reporte no está guardado', 'El PDF se descargó, pero presiona 💾 Guardar para no perder los cambios.', 'info'), 3400);
+    toast('Guardado en la app y PDF descargado', `${nombre}.pdf está en tus descargas.`);
   } catch (e) {
     toast('No se pudo generar el PDF', e.message, 'err');
   } finally { b.disabled = false; b.textContent = '📄 Guardar PDF'; }
